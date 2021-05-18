@@ -227,7 +227,7 @@ command:pull() {
   command-setup +subdir
 
   subrepo:pull
-  if OK; then
+  if OK_or_0; then
     say "Subrepo '$subdir' pulled from '$subrepo_remote' ($subrepo_branch)."
   elif [[ $CODE -eq -1 ]]; then
     say "Subrepo '$subdir' is up to date."
@@ -246,7 +246,7 @@ command:push() {
   command-setup +subdir branch
 
   subrepo:push
-  if OK; then
+  if OK_or_0; then
     say "Subrepo '$subdir' pushed to '$subrepo_remote' ($subrepo_branch)."
   elif [[ $CODE -eq -2 ]]; then
     say "Subrepo '$subdir' has no new commits to push."
@@ -584,6 +584,12 @@ subrepo:push() {
   local branch_name=$branch
   local new_upstream=false
   local branch_created=false
+
+  # if override_branch is not specified then calculate a default branch name for the subrepo push
+  if [ "$override_branch" = "" ]; then
+    repo_name="$(basename $(git rev-parse --show-toplevel))" || repo_name="unknown" # may fail
+    subrepo_branch="$repo_name-$original_head_branch"
+  fi
 
   if [[ -z $branch_name ]]; then
     FAIL=false OUT=false CALL subrepo:fetch
@@ -1900,6 +1906,11 @@ err() {
 # Check if OK:
 OK() {
   $OK
+}
+
+# Check if OK or 0:
+OK_or_0() {
+  $OK || [ "$CODE" = "0" ]
 }
 
 # Nicely report common error messages:
