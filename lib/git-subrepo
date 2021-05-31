@@ -1790,7 +1790,8 @@ shown in the output above.
 
 This is the common conflict resolution workflow:
 
-  1. cd $worktree
+  1. cd $(realpath . --relative-to $OLDPWD)
+     alternatively: git-cola -r $(realpath .)
   2. Resolve the conflicts (see "git status").
   3. "git add" the resolved files.
 ...
