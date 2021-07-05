@@ -10,7 +10,7 @@ ARGS=()
 ARGS+=( "$1" )
 shift
 
-# make all other arguments relative to git root
+# make all other arguments relative to git root of current directory
 GIT_ROOT=$(git rev-parse --show-toplevel)
 
 while (( "$#" )); do
