@@ -485,8 +485,9 @@ subrepo:clone() {
     read-gitrepo-file
     o "Check if we already are up to date."
     if [[ $upstream_head_commit == "$subrepo_commit" ]]; then
-      reclone_up_to_date=true
-      return
+      o "Same commit, but continue in order to update the parent in .gitrepo file."
+      #reclone_up_to_date=true
+      #return
     fi
     o "Remove the old subdir."
     RUN git rm -r -- "$subdir"
