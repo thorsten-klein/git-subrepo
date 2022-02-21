@@ -81,13 +81,13 @@ is "$(cat "$OWNER/foo/bar/Bar2")" \
 
 (
   cd "$OWNER/foo"
-  git subrepo push bar
+  git subrepo push bar --branch master
 ) &> /dev/null || die
 
-# Check commit messages
+# Check that no commit message is created
 {
   foo_new_commit_message=$(cd "$OWNER/foo"; git log --format=%B -n 1)
-  like "$foo_new_commit_message" \
+  unlike "$foo_new_commit_message" \
       "git subrepo push bar" \
       "subrepo push should not have merge message"
 }

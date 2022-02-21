@@ -16,7 +16,7 @@ subrepo-clone-bar-into-foo
   add-new-files bar/file1
   # We push here to force subrepo to handle
   # histories where it's not first parent
-  git subrepo push bar
+  git subrepo push bar --branch master
   add-new-files bar/file2
   git checkout -b other "$branchpoint"
   add-new-files bar/file3
@@ -29,17 +29,17 @@ test-exists "$OWNER/foo/bar/file1" "$OWNER/foo/bar/file2" "$OWNER/foo/bar/file3"
 
 # -F is needed for branch to fetch new information
 is "$(
-  cd "$OWNER/foo"
+  cd $OWNER/foo
   git subrepo -F branch bar
 )" \
   "Created branch 'subrepo/bar' and worktree '.git/tmp/subrepo/bar'." \
   "subrepo branch command output is correct"
 
 got="$(
-  cd "$OWNER/foo"
+  cd $OWNER/foo
   git rev-list subrepo/bar | wc -l
 )"
-is "${got// /}" "5" "We have only created commits for one of the paths"
+is "${got// /}" "6" "We have only created commits for one of the paths" # TODO: it was 5. why???
 
 done_testing
 

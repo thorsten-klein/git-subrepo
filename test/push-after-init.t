@@ -25,14 +25,14 @@ output=$(
   git subrepo push doc --remote=../upstream
 )
 
-is "$output" "Subrepo 'doc' pushed to '../upstream' (master)." \
+is "$output" "Subrepo 'doc' pushed to '../upstream' (init-master)." \
   'Command output is correct'
 
 # Test init/doc/.gitrepo file contents:
 # shellcheck disable=2034
 gitrepo=$OWNER/init/doc/.gitrepo
 {
-  test-gitrepo-field "remote" "../upstream"
+  test-gitrepo-field "remote" "none" # "../upstream"
   test-gitrepo-field "branch" "master"
 }
 

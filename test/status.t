@@ -6,6 +6,14 @@ source test/setup
 
 use Test::More
 
+SUBREPO_DIR=$(realpath $(dirname $BASH_SOURCE)/..)
+
+cd $SUBREPO_DIR
+
+git init .
+git add *
+git commit -m "initial"
+
 {
   output=$(git subrepo status)
 
@@ -64,5 +72,7 @@ use Test::More
 }
 
 done_testing 15
+
+rm -rf $SUBREPO_DIR/.git
 
 teardown

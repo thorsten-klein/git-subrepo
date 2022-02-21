@@ -61,7 +61,7 @@ msg_main1="main1 initial add to subrepo"
   git add share/readme
   git commit -m "$msg_main1"
 
-  git subrepo push share
+  git subrepo push share --branch sync
 ) &> /dev/null
 
 ok "$(! git:branch-exists "subrepo-push/share")" \
@@ -74,18 +74,18 @@ ok "$(! git:branch-exists "subrepo-push/share")" \
 msg_main2="main2 initial add to subrepo"
 ( set -x
   cd main2
-  git subrepo pull share
+  git subrepo pull share --branch sync --force
   echo "$msg_main2" >> share/readme
   git add share/readme
   git commit -m "$msg_main2"
 
-  git subrepo push share
+  git subrepo push share --branch sync
 ) &> /dev/null || die
 
 # Go back into main1 and pull the subrepo updates:
 ( set -x
   cd main1
-  git subrepo pull share
+  git subrepo pull share --branch sync --force
 ) &> /dev/null || die
 
 # The readme file should have both changes:
