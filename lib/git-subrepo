@@ -817,7 +817,7 @@ subrepo:branch() {
         "$commit:$subdir/.gitrepo" "subrepo.commit"
       if [[ -z $output ]]; then
         o "Ignore commit, no .gitrepo file"
-        continue
+          output=$gitrepo_commit
       fi
 
       local gitrepo_commit=$output
