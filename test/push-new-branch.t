@@ -33,10 +33,12 @@ clone-foo-and-bar
     'First push message is correct '
 }
 
-# Do the subrepo push to another branch again:
+# Do the subrepo push to same branch again:
 {
+  cd "$OWNER/foo"
+  git subrepo pull bar --force --branch newbar
+
   message=$(
-    cd "$OWNER/foo"
     git subrepo push bar --branch newbar
   )
 

@@ -28,7 +28,7 @@ clone-foo-and-bar
 {
   message=$(
     cd "$OWNER/foo"
-    git subrepo push bar --squash
+    git subrepo push bar --squash --branch master
   )
 
   # Test the output:

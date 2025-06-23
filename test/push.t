@@ -39,8 +39,10 @@ clone-foo-and-bar
     git config user.name 'PushUser'
     git config user.email 'push@push'
     git subrepo pull --quiet bar
-    git subrepo push bar
+    git subrepo push bar --branch master
   )
+  
+  QUIET=$(git -C $OWNER/foo subrepo pull bar --force)
 
   # Test the output:
   is "$message" \
@@ -101,8 +103,10 @@ gitrepo=$OWNER/foo/bar/.gitrepo
 {
   message=$(
     cd "$OWNER/foo"
-    git subrepo push bar
+    git subrepo push bar --branch master
   )
+
+  QUIET=$(git -C $OWNER/foo subrepo pull bar --force)
 
   # Test the output:
   is "$message" \
@@ -136,8 +140,10 @@ test-exists \
 {
   message=$(
     cd "$OWNER/foo"
-    git subrepo push bar
+    git subrepo push bar --branch master
   )
+
+  QUIET=$(git -C $OWNER/foo subrepo pull bar)
 
   # Test the output:
   is "$message" \
@@ -163,12 +169,12 @@ test-exists \
 {
   message=$(
     cd "$OWNER/foo"
-    git subrepo push bar 2>&1 || true
+    git subrepo push bar --branch master 2>&1 || true
   )
 
   # Test the output:
   is "$message" \
-    "git-subrepo: There are new changes upstream, you need to pull first." \
+    "git-subrepo: There are new changes upstream (master), you need to pull first." \
     'Stopped by other push'
 }
 
