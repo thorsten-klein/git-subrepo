@@ -22,16 +22,16 @@ INSTALL_EXT  ?= $(INSTALL_LIB)/$(NAME).d
 INSTALL_MAN1 ?= $(DESTDIR)$(PREFIX)/share/man/man1
 
 # Docker variables:
-DOCKER_TAG ?= 0.0.4
+DOCKER_TAG ?= 0.0.7
 DOCKER_IMAGE := ingy/bash-testing:$(DOCKER_TAG)
-BASH_VERSIONS ?= 5.1 5.0 4.4 4.3 4.2 4.1 4.0
+BASH_VERSIONS ?= 5.2 5.1 5.0 4.4 4.3 4.2 4.1 4.0
 DOCKER_TESTS := $(BASH_VERSIONS:%=docker-test-%)
-GIT_VERSIONS := 2.29 2.25 2.17 2.7
+GIT_VERSIONS := 2.48 2.40 2.30 2.29 2.25 2.17 2.7
 
 prove ?=
 test ?= test/
-bash ?= 5.0
-git ?= 2.29
+bash ?= 5.2
+git ?= 2.48
 
 # Basic targets:
 default: help
@@ -63,7 +63,7 @@ install:
 	install -d -m 0755 $(INSTALL_LIB)/
 	install -C -m 0755 $(LIB) $(INSTALL_LIB)/
 	install -d -m 0755 $(INSTALL_EXT)/
-	install -C -m 0755 $(EXTS) $(INSTALL_EXT)/
+	install -C -m 0644 $(EXTS) $(INSTALL_EXT)/
 	install -d -m 0755 $(INSTALL_MAN1)/
 	install -C -m 0644 $(MAN1)/$(NAME).1 $(INSTALL_MAN1)/
 
@@ -101,12 +101,14 @@ compgen: force
 	    $(SHARE)/completion.bash
 	perl pkg/bin/generate-completion.pl zsh $(DOC) $(LIB) > \
 	    $(SHARE)/zsh-completion/_git-subrepo
+	perl pkg/bin/generate-completion.pl fish $(DOC) $(LIB) > \
+	    $(SHARE)/git-subrepo.fish
 
 clean:
 	rm -fr tmp test/tmp
 
 define docker-make-test
-	docker run -i -t --rm \
+	docker run --rm \
 	    -v $(PWD):/git-subrepo \
 	    -w /git-subrepo \
 	    $(DOCKER_IMAGE) \

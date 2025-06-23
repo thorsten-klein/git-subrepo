@@ -16,6 +16,7 @@ BASHLIB=$(
 export BASHLIB
 
 export PATH=$BASHLIB:$PATH
+# shellcheck disable=SC1091
 source bash+ :std
 
 source 'lib/git-subrepo'
@@ -32,6 +33,10 @@ export COLLAB=$TMP/collab
 mkdir -p "$UPSTREAM" "$OWNER" "$COLLAB"
 
 cp -r test/repo/{foo,bar,init} "$UPSTREAM/"
+
+DEFAULTBRANCH=$( git config --global --get init.defaultbranch || true )
+[[ -z $DEFAULTBRANCH ]] && DEFAULTBRANCH="master"
+export DEFAULTBRANCH
 
 ###
 # Test helper functions:
@@ -68,7 +73,7 @@ add-new-files() {
   local file
   for file in "$@"; do
     echo "new file $file" > "$file"
-    git add "$file"
+    git add --force "$file"
   done
   git commit --quiet -m "add new file: $file" &> /dev/null
 }
@@ -151,7 +156,7 @@ test-gitrepo-comment-block() {
 ; DO NOT EDIT (unless you know what you are doing)
 ;
 ; This subdirectory is a git \"subrepo\", and this file is maintained by the
-; git-subrepo command. See https://github.com/git-commands/git-subrepo#readme
+; git-subrepo command. See https://github.com/ingydotnet/git-subrepo#readme
 ;" \
     'Comment header block is correct'
 }

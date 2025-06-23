@@ -1,7 +1,7 @@
 # shellcheck shell=bash
 
 # Enable git-subrepo completion facilities
-if [[ ${BASH_VERSION-} ]]; then
+if [[ -n ${BASH_VERSION-} ]]; then
   # Bash
   if [[ $(type -t __gitcomp 2> /dev/null) != function ]]; then
     # The standard Git completion script for Bash does not seem to be
@@ -17,9 +17,10 @@ if [[ ${BASH_VERSION-} ]]; then
         {,/usr/local,~/.homebrew}/etc/bash_completion.d/git
       do
         # If a file is found at the location being checked…
+        # shellcheck source=/dev/null
         if [[ -f $f ]]; then
           # …source it.
-          source $f
+          source "$f"
           [[ $(type -t __gitcomp) != function ]] &&
             echo "WARNING: Git completion script '$f' does not provide a '__gitcomp' function"
           # Proceed to loading our Bash completion facilities.
@@ -35,12 +36,16 @@ if [[ ${BASH_VERSION-} ]]; then
       # If no file was found at any of the potential file-paths checked
       # above, source a bundled copy of
       # <https://github.com/git/git/blob/c285171/contrib/completion/git-completion.bash>.
+
+      # shellcheck source=share/git-completion.bash
       source "$GIT_SUBREPO_ROOT/share/git-completion.bash"
     }
   fi
   # Load our Bash completion facilities.
+
+  # shellcheck source=share/completion.bash
   source "$GIT_SUBREPO_ROOT/share/completion.bash"
-elif [[ ${ZSH_VERSION-} ]]; then
+elif [[ -n ${ZSH_VERSION-} ]]; then
   # Zsh
   #
   # Prepend to `fpath` the path of the directory containing our zsh
