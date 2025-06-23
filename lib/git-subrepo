@@ -698,6 +698,7 @@ subrepo:push() {
     git:delete-branch "$branch_name"
   fi
 
+  # TODO: comment this block
   o "Put updates into '$subdir/.gitrepo' file."
   upstream_head_commit=$new_upstream_head_commit
   subrepo_commit_ref=$upstream_head_commit

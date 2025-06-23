@@ -19,7 +19,6 @@ _git_subrepo() {
         esac
 
     else
-
         case "$cur" in
         -*)
             __gitcomp "$_opts"
@@ -35,10 +34,13 @@ _git_subrepo() {
         local subdircommand
         subdircommand="$(__git_find_on_cmdline "$subdircommands")"
         if [ -n "$subdircommand" ]; then
+            GIT_ROOT=$(git rev-parse --show-toplevel)
             local git_subrepos
-            git_subrepos=$(git subrepo status -q)
-            __gitcomp "$git_subrepos"
+            git_subrepos=$(git -C "$GIT_ROOT" subrepo status -q)
+            git_subrepos_abs=$(cd $GIT_ROOT; for git_subrepo in $git_subrepos; do realpath -m $git_subrepo; done)
+            __gitcomp "$git_subrepos_abs"
         fi
 
     fi
 }
+
