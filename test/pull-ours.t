@@ -69,7 +69,7 @@ is "$(cat "$OWNER/foo/bar/Bar2")" \
 
 (
   cd "$OWNER/foo"
-  git subrepo push bar
+  git subrepo push bar --branch master
 ) &> /dev/null || die
 
 (

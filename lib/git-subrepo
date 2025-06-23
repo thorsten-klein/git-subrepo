@@ -235,7 +235,7 @@ command:pull() {
   command-setup +subdir
 
   subrepo:pull
-  if OK; then
+  if OK_or_0; then
     say "Subrepo '$subdir' pulled from '$subrepo_remote' ($subrepo_branch)."
   elif [[ $CODE -eq -1 ]]; then
     say "Subrepo '$subdir' is up to date."
@@ -254,7 +254,7 @@ command:push() {
   command-setup +subdir branch
 
   subrepo:push
-  if OK; then
+  if OK_or_0; then
     say "Subrepo '$subdir' pushed to '$subrepo_remote' ($subrepo_branch)."
   elif [[ $CODE -eq -2 ]]; then
     say "Subrepo '$subdir' has no new commits to push."
@@ -485,6 +485,7 @@ subrepo:clone() {
     read-gitrepo-file
     o "Check if we already are up to date."
     if [[ $upstream_head_commit == "$subrepo_commit" ]]; then
+      #o "Same commit, but continue in order to update the parent in .gitrepo file."
       reclone_up_to_date=true
       return
     fi
@@ -547,7 +548,7 @@ subrepo:pull() {
     return
   fi
 
-  # Check if we already are up to date
+  # Check if we are already are up to date
   # If the -u flag is present, always perform the operation
   if [[ $upstream_head_commit == "$subrepo_commit" ]] && ! $update_wanted; then
     OK=false; CODE=-1; return
@@ -600,7 +601,18 @@ subrepo:push() {
   local new_upstream=false
   local branch_created=false
 
+  # backup the actual subrepo_branch value
+  subrepo_branch_original=$subrepo_branch #$original_head_branch
+
+  subrepo_branch_resulting=$subrepo_branch_original
+  if [ "$override_branch" = "" ]; then
+    repo_name="$(basename $(git rev-parse --show-toplevel))" || repo_name="unknown" # may fail
+    subrepo_branch_resulting="$repo_name-$original_head_branch"
+  fi
+
   if [[ -z $branch_name ]]; then
+    # pull the resulting branch
+    subrepo_branch=$subrepo_branch_resulting
     FAIL=false OUT=false CALL subrepo:fetch
 
     if ! OK; then
@@ -618,8 +630,25 @@ subrepo:push() {
       # Check that we are up to date:
       o "Check upstream head against .gitrepo commit."
       if ! $force_wanted; then
+        o upstream_head_commit $upstream_head_commit
+        o subrepo_commit $subrepo_commit
         if [[ $upstream_head_commit != "$subrepo_commit" ]]; then
-          error "There are new changes upstream, you need to pull first."
+          error "There are new changes upstream ($subrepo_branch), you need to pull first."
+        fi
+      else
+        if [[ $upstream_head_commit != "$subrepo_commit" ]]; then
+          o "upstream_head_commit was '$upstream_head_commit'"
+          o "subrepo_commit was '$subrepo_commit'"
+
+          subrepo_branch=$subrepo_branch_original
+          o "Fetching now remote branch '$subrepo_branch' to be based on correct commit" # TODO(ThKl): really only for --force???
+          FAIL=false OUT=false CALL subrepo:fetch
+
+          o "upstream_head_commit is now '$upstream_head_commit'"
+          o "subrepo_commit is now '$subrepo_commit'"
+          if [[ $upstream_head_commit != "$subrepo_commit" ]]; then
+            echo "Note: --force will (most likely) overwrite changes on remote branch '$subrepo_branch'!"
+          fi
         fi
       fi
     fi
@@ -678,13 +707,16 @@ subrepo:push() {
   if ! $force_wanted; then
     o "Make sure '$branch_name' contains the '$refs_subrepo_fetch' HEAD."
     if ! git:commit-in-rev-list "$upstream_head_commit" "$branch_name"; then
-      error "Can't commit: '$branch_name' doesn't contain upstream HEAD: " \
-        "$upstream_head_commit"
+      error "Can't commit: '$branch_name' doesn't contain upstream HEAD ($upstream_head_commit)"
     fi
   fi
 
   local force=''
   "$force_wanted" && force=' --force'
+
+  # if override_branch is not specified then calculate a default branch name for the subrepo push
+  subrepo_branch="$subrepo_branch_resulting"
+  o "Using automatically calculated branch name ($subrepo_branch) instead of ($original_head_branch)."
 
   o "Push$force branch '$branch_name' to '$subrepo_remote' ($subrepo_branch)."
   # shellcheck disable=2086
@@ -698,6 +730,7 @@ subrepo:push() {
     git:delete-branch "$branch_name"
   fi
 
+  # TODO: comment this block
   o "Put updates into '$subdir/.gitrepo' file."
   upstream_head_commit=$new_upstream_head_commit
   subrepo_commit_ref=$upstream_head_commit
@@ -726,6 +759,10 @@ subrepo:fetch() {
   o "Fetch the upstream: $subrepo_remote ($subrepo_branch)."
   RUN git fetch --no-tags --quiet "$subrepo_remote" "$subrepo_branch"
   OK || return
+
+  o "Fetch resulted in following commits:"
+  OUT=true RUN git log -10 --pretty='%H %P %s' FETCH_HEAD^0 2>&1
+  o "$output"
 
   o "Get the upstream subrepo HEAD commit."
   OUT=true RUN git rev-parse FETCH_HEAD^0
@@ -770,8 +807,9 @@ subrepo:branch() {
     local prev_commit=
     local ancestor=
     o "Create new commits with parents into the subrepo fetch"
-    OUT=true RUN git rev-list --reverse --ancestry-path --topo-order "$subrepo_parent..HEAD"
+    OUT=true RUN git rev-list --reverse --topo-order "$subrepo_parent..HEAD"
     local commit_list=$output
+
     for commit in $commit_list; do
       o "Working on $commit"
 
@@ -779,7 +817,7 @@ subrepo:branch() {
         "$commit:$subdir/.gitrepo" "subrepo.commit"
       if [[ -z $output ]]; then
         o "Ignore commit, no .gitrepo file"
-        continue
+          output=$gitrepo_commit
       fi
 
       local gitrepo_commit=$output
@@ -816,6 +854,7 @@ subrepo:branch() {
       first_parent=()
       [[ $prev_commit ]] && first_parent=(-p "$prev_commit")
       second_parent=()
+
       if [[ -z $first_gitrepo_commit ]]; then
         first_gitrepo_commit=$gitrepo_commit
         second_parent=(-p "$gitrepo_commit")
@@ -836,7 +875,7 @@ subrepo:branch() {
         local PREVIOUS_IFS=$IFS
         IFS=$'\n'
         local author_info
-        mapfile -t author_info < <(git log -1 --date=default --format=%ad%n%ae%n%an "$commit")
+        mapfile -t author_info < <(git log -1 --date=default --format=%ad%n%ae%n%an%n%cd%n%ce%n%cn "$commit")
         IFS=$PREVIOUS_IFS
 
         # When we create new commits we leave the author information unchanged
@@ -844,11 +883,18 @@ subrepo:branch() {
         # This should be analog how cherrypicking is handled allowing git
         # to store both the original author but also the responsible committer
         # that created the local version of the commit and pushed it.
+        #
+        # ISSUE SOLVED: The committer date was +1 second sometimes. Enforce correct date also for committer, not only for author.
+          #GIT_COMMITTER_DATE=${author_info[3]} \
+          #GIT_COMMITTER_EMAIL=${author_info[4]} \
+          #GIT_COMMITTER_NAME=${author_info[5]} \
         prev_commit=$(git log -n 1 --date=default --format=%B "$commit" |
           GIT_AUTHOR_DATE=${author_info[0]} \
           GIT_AUTHOR_EMAIL=${author_info[1]} \
           GIT_AUTHOR_NAME=${author_info[2]} \
+          GIT_COMMITTER_DATE=${author_info[3]} \
           git commit-tree -F - "${first_parent[@]}" "${second_parent[@]}" "$commit":"$subdir")
+
       else
         o "Create empty placeholder"
         prev_commit=$(git commit-tree -m "EMPTY" \
@@ -885,7 +931,7 @@ subrepo:commit() {
 
   if ! "$force_wanted"; then
     local upstream=$upstream_head_commit
-    o "Make sure '$subrepo_commit_ref' contains the upstream HEAD."
+    o "Make sure '$subrepo_commit_ref' contains the upstream HEAD ($upstream_head_commit)."
     if ! git:commit-in-rev-list "$upstream" "$subrepo_commit_ref"; then
       error \
         "Can't commit: '$subrepo_commit_ref' doesn't contain upstream HEAD."
@@ -1475,7 +1521,6 @@ update-gitrepo-file() {
     fi
   fi
 
-
   # TODO: only update remote and branch if supplied and $update_wanted
   if $newfile || [[ $update_wanted && $override_remote ]]; then
     RUN git config --file="$gitrepo" subrepo.remote "$subrepo_remote"
@@ -1487,6 +1532,7 @@ update-gitrepo-file() {
 
   RUN git config --file="$gitrepo" subrepo.commit "$upstream_head_commit"
   # Only write new parent when we are at the head of upstream
+  o "subrepo_commit_ref $subrepo_commit_ref"
   if [[ $upstream_head_commit && $subrepo_commit_ref ]]; then
     OUT=true RUN git rev-parse "$subrepo_commit_ref"
     o "$upstream_head_commit == $output"
@@ -1783,7 +1829,8 @@ shown in the output above.
 
 This is the common conflict resolution workflow:
 
-  1. cd $worktree
+  1. cd $(realpath . --relative-to $OLDPWD)
+     alternatively: git-cola -r $(realpath .)
   2. Resolve the conflicts (see "git status").
   3. "git add" the resolved files.
 ...
@@ -1986,6 +2033,11 @@ err() {
 # Check if OK:
 OK() {
   $OK
+}
+
+# Check if OK or 0:
+OK_or_0() {
+  $OK || [ "$CODE" = "0" ]
 }
 
 # Nicely report common error messages:

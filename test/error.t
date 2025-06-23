@@ -117,7 +117,7 @@ clone-foo-and-bar
 
 {
   is "$(
-      cd .git
+      cd $OWNER/bar/.git
       catch git subrepo status
     )" \
     "git-subrepo: Can't 'subrepo status' outside a working tree." \

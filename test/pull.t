@@ -54,6 +54,7 @@ gitrepo=$OWNER/foo/bar/.gitrepo
       "git subrepo pull bar" \
       "Subrepo pull commit message OK"
   bar_commit_short=$(git rev-parse --short "$bar_head_commit")
+  bar_commit_short=${bar_commit_short::7} # length 7
   like "$foo_new_commit_message" \
       "merged:   \"$bar_commit_short" \
       "Pull commit contains merged"

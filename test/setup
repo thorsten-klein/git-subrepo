@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
-
 # Set this locally for Windows:
-git config core.autocrlf input
+#git config core.autocrlf input # not supporting parallel
 
 set -e
 
@@ -22,7 +21,8 @@ source bash+ :std
 
 source 'lib/git-subrepo'
 
-export TMP=$SCRIPT_DIR/tmp
+RANDOM_DIR="$(date +%s-%N)-$RANDOM"
+export TMP=$SCRIPT_DIR/tmp/$RANDOM_DIR
 rm -fr "$TMP"
 
 #export GIT_EXEC_PATH=$PWD/lib:$(git --exec-path)
@@ -211,3 +211,5 @@ catch() {
 teardown() {
   rm -fr "$TMP"
 }
+
+

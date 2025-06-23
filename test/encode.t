@@ -58,7 +58,7 @@ test_round() {
   {
     is "$(
        cd "$OWNER/foo"
-       git subrepo push -- "$normalize_dir"
+       git subrepo push --branch master -- "$normalize_dir"
        )" \
        "Subrepo '$normalize_dir' pushed to '$UPSTREAM/bar' (master)." \
        'subrepo push command output is correct'

@@ -14,7 +14,7 @@ clone-foo-and-bar
   is "$(
     cd "$OWNER/bar"
     git subrepo --quiet clone "$UPSTREAM/foo"
-    catch git subrepo push foo
+    catch git subrepo push foo --branch master
   )" \
     "Subrepo 'foo' has no new commits to push." \
     "Output OK: Check that 'push' requires changes to push"
