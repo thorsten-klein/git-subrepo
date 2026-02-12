@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "git-subrepo"
 version = "0.4.9"
 description = "Git Submodule Alternative"
-readme = "ReadMe.pod"
+readme = "README.md"
 requires-python = ">=3.7"
 authors = [
     {name = "Thorsten Klein", email = "thorsten.klein.git@gmail.com"}
@@ -26,16 +26,26 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
 ]
 
-[project.optional-dependencies]
-test = [
+[project.scripts]
+git-subrepo = "git_subrepo:main"
+
+[dependency-groups]
+dev = [
     "pytest>=7.0.0",
     "pytest-xdist>=3.0.0",
+    "pytest-cov>=4.0.0",
+    "pytest-mock>=3.6.1",
 ]
 
 [tool.pytest.ini_options]
-# You can override any pytest option via pytest argument `-o key=value`.
-# E.g. unset option `-o pythonpath=` to use the installed west in tests
-pythonpath = "src"
+testpaths = ["test"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
 
 [tool.setuptools]
+packages = []
 py-modules = []
+
+[tool.setuptools.package-data]
+"*" = ["*.sh", "*.bash"]
