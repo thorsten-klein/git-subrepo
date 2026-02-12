@@ -4,17 +4,15 @@ This directory contains pytest-based tests for git-subrepo, converted from the o
 
 ## Requirements
 
-Install test dependencies:
+Install test dependencies using the optional test extras:
 
 ```bash
-pip install -r requirements-test.txt
+pip install -e ".[test]"
 ```
 
-Or install pytest directly:
-
-```bash
-pip install pytest>=7.0.0 pytest-xdist>=3.0.0
-```
+This will install:
+- pytest>=7.0.0
+- pytest-xdist>=3.0.0 (for parallel test execution)
 
 ## Running Tests
 
@@ -49,6 +47,15 @@ pytest tests/ -k pull
 ```
 
 This will run all tests with "pull" in the name (test_pull.py, test_pull_all.py, etc.)
+
+## Configuration
+
+Test configuration is defined in `pyproject.toml` at the project root:
+
+- Test discovery paths
+- Test naming conventions
+- Pytest options (verbose output, traceback format)
+- Test markers
 
 ## Test Structure
 
