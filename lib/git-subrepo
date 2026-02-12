@@ -6,25 +6,9 @@
 #
 
 # Determine the directory where this script is located
-SOURCE=${BASH_SOURCE[0]}
-while [[ -h $SOURCE ]]; do
-  DIR=$( cd -P "$( dirname "$SOURCE" )" && pwd )
-  SOURCE=$(readlink "$SOURCE")
-  [[ $SOURCE != /* ]] && SOURCE=$DIR/$SOURCE
-done
-SOURCE_DIR=$(dirname "$SOURCE")
+SOURCE_DIR=$(dirname $(realpath "${BASH_SOURCE[0]}"))
 
 # Call the Python implementation only if not being sourced
-# When sourced (BASH_SOURCE[0] != $0), define helper functions for tests
 if [[ ${BASH_SOURCE[0]} == "$0" ]]; then
-    exec python3 "$SOURCE_DIR/git-subrepo.py" "$@"
-else
-    # Define bash helper functions for tests that might need them
-    git:branch-exists() {
-        git rev-list "refs/heads/$1" -1 &> /dev/null
-    }
-
-    git:rev-exists() {
-        git rev-list "$1" -1 &> /dev/null
-    }
+    "$SOURCE_DIR/git-subrepo.py" "$@"
 fi
