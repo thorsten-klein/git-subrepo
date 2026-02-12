@@ -35,13 +35,6 @@ test = [
 [tool.pytest.ini_options]
 # You can override any pytest option via pytest argument `-o key=value`.
 # E.g. unset option `-o pythonpath=` to use the installed west in tests
-testpaths = ["tests"]
-python_files = ["test_*.py"]
-python_classes = ["Test*"]
-python_functions = ["test_*"]
-markers = [
-    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
-]
 pythonpath = "src"
 
 [tool.setuptools]
