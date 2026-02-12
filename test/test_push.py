@@ -1,9 +1,14 @@
 """Tests for git subrepo push command"""
+
 import subprocess
 from conftest import (
-    assert_exists, assert_file_exists,
-    assert_gitrepo_field, assert_commit_count,
-    git_rev_parse, git_subrepo, assert_output_matches
+    assert_exists,
+    assert_file_exists,
+    assert_gitrepo_field,
+    assert_commit_count,
+    git_rev_parse,
+    git_subrepo,
+    assert_output_matches,
 )
 
 
@@ -21,22 +26,30 @@ def test_push(env):
 
     # Add new file in bar and push
     env.add_new_files('bargy', cwd=env.owner / 'bar')
-    subprocess.run(['git', 'push'], cwd=env.owner / 'bar', check=True, capture_output=True)
+    subprocess.run(
+        ['git', 'push'], cwd=env.owner / 'bar', check=True, capture_output=True
+    )
 
     # Do the subrepo pull and push
-    subprocess.run(['git', 'config', 'user.name', 'PushUser'], cwd=env.owner / 'foo', check=True)
-    subprocess.run(['git', 'config', 'user.email', 'push@push'], cwd=env.owner / 'foo', check=True)
+    subprocess.run(
+        ['git', 'config', 'user.name', 'PushUser'], cwd=env.owner / 'foo', check=True
+    )
+    subprocess.run(
+        ['git', 'config', 'user.email', 'push@push'], cwd=env.owner / 'foo', check=True
+    )
     git_subrepo('pull --quiet bar', cwd=env.owner / 'foo')
     result = git_subrepo('push bar', cwd=env.owner / 'foo')
 
     assert_output_matches(
         result.stdout.strip(),
         f"Subrepo 'bar' pushed to '{env.upstream}/bar' (master).",
-        'push message is correct'
+        'push message is correct',
     )
 
     # Pull in OWNER/bar
-    subprocess.run(['git', 'pull'], cwd=env.owner / 'bar', check=True, capture_output=True)
+    subprocess.run(
+        ['git', 'pull'], cwd=env.owner / 'bar', check=True, capture_output=True
+    )
 
     # Check commit author/committer
     pull_commit = subprocess.run(
@@ -44,13 +57,13 @@ def test_push(env):
         cwd=env.owner / 'bar',
         capture_output=True,
         text=True,
-        check=True
+        check=True,
     ).stdout.strip()
 
     assert_output_matches(
         pull_commit,
         "PushUser push@push PushUser push@push",
-        "Pull commit has PushUser as both author and committer"
+        "Pull commit has PushUser as both author and committer",
     )
 
     # Check subrepo commit author/committer
@@ -59,13 +72,13 @@ def test_push(env):
         cwd=env.owner / 'bar',
         capture_output=True,
         text=True,
-        check=True
+        check=True,
     ).stdout.strip()
 
     assert_output_matches(
         subrepo_commit,
         "FooUser foo@foo PushUser push@push",
-        "Subrepo commits has FooUser as author but PushUser as committer"
+        "Subrepo commits has FooUser as author but PushUser as committer",
     )
 
     # Check that all commits arrived in subrepo
@@ -92,11 +105,13 @@ def test_push(env):
     assert_output_matches(
         result.stdout.strip(),
         f"Subrepo 'bar' pushed to '{env.upstream}/bar' (master).",
-        'push message is correct'
+        'push message is correct',
     )
 
     # Pull the changes from UPSTREAM/bar in OWNER/bar
-    subprocess.run(['git', 'pull'], cwd=env.owner / 'bar', check=True, capture_output=True)
+    subprocess.run(
+        ['git', 'pull'], cwd=env.owner / 'bar', check=True, capture_output=True
+    )
 
     assert_file_exists(env.owner / 'bar' / 'Bar')
     assert_file_exists(env.owner / 'bar' / 'FooBar')
@@ -115,13 +130,17 @@ def test_push(env):
     assert_output_matches(
         result.stdout.strip(),
         f"Subrepo 'bar' pushed to '{env.upstream}/bar' (master).",
-        'Sequential pushes are correct'
+        'Sequential pushes are correct',
     )
 
     # Make changes in subrepo
-    subprocess.run(['git', 'pull'], cwd=env.owner / 'bar', check=True, capture_output=True)
+    subprocess.run(
+        ['git', 'pull'], cwd=env.owner / 'bar', check=True, capture_output=True
+    )
     env.add_new_files('barBar2', cwd=env.owner / 'bar')
-    subprocess.run(['git', 'push'], cwd=env.owner / 'bar', check=True, capture_output=True)
+    subprocess.run(
+        ['git', 'push'], cwd=env.owner / 'bar', check=True, capture_output=True
+    )
 
     # Make changes in main repo
     env.add_new_files('bar/FooBar5', cwd=env.owner / 'foo')
@@ -133,5 +152,5 @@ def test_push(env):
     assert_output_matches(
         result.stderr.strip() if result.returncode != 0 else result.stdout.strip(),
         "git-subrepo: There are new changes upstream, you need to pull first.",
-        'Stopped by other push'
+        'Stopped by other push',
     )

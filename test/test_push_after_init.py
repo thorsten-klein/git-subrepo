@@ -1,7 +1,11 @@
 """Tests for git subrepo push after init"""
+
 import subprocess
 from conftest import (
-    assert_exists, assert_gitrepo_field, git_subrepo, assert_output_matches
+    assert_exists,
+    assert_gitrepo_field,
+    git_subrepo,
+    assert_output_matches,
 )
 
 
@@ -23,10 +27,7 @@ def test_push_after_init(env):
     upstream_dir = env.owner / 'upstream'
     upstream_dir.mkdir()
     subprocess.run(
-        ['git', 'init', '--bare'],
-        cwd=upstream_dir,
-        check=True,
-        capture_output=True
+        ['git', 'init', '--bare'], cwd=upstream_dir, check=True, capture_output=True
     )
 
     # Push
@@ -35,7 +36,7 @@ def test_push_after_init(env):
     assert_output_matches(
         result.stdout.strip(),
         "Subrepo 'doc' pushed to '../upstream' (master).",
-        'Command output is correct'
+        'Command output is correct',
     )
 
     # Test init/doc/.gitrepo file contents
@@ -48,7 +49,7 @@ def test_push_after_init(env):
     subprocess.run(
         ['git', 'clone', str(upstream_dir), str(up_dir)],
         check=True,
-        capture_output=True
+        capture_output=True,
     )
 
     assert_exists(up_dir / '.git', should_exist=True)

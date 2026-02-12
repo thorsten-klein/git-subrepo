@@ -1,8 +1,7 @@
 """Tests for issue #29"""
+
 import subprocess
-from conftest import (
-    git_subrepo, assert_output_matches
-)
+from conftest import git_subrepo, assert_output_matches
 
 
 def test_issue29(env):
@@ -23,19 +22,21 @@ def test_issue29(env):
     # Add an empty 'readme' to the share repo
     (share_dir / '.gitattributes').write_text('* text eol=lf\n')
     (share_dir / 'readme').touch()
-    subprocess.run(['git', 'add', 'readme', '.gitattributes'], cwd=share_dir, check=True)
+    subprocess.run(
+        ['git', 'add', 'readme', '.gitattributes'], cwd=share_dir, check=True
+    )
     subprocess.run(
         ['git', 'commit', '-m', 'Initial share'],
         cwd=share_dir,
         check=True,
-        capture_output=True
+        capture_output=True,
     )
     # To push into here later we must not have working copy on master branch
     subprocess.run(
         ['git', 'checkout', '-b', 'temp'],
         cwd=share_dir,
         check=True,
-        capture_output=True
+        capture_output=True,
     )
 
     # Clone the share repo into main1
@@ -45,12 +46,9 @@ def test_issue29(env):
         ['git', 'commit', '-m', 'Initial main1'],
         cwd=main1_dir,
         check=True,
-        capture_output=True
+        capture_output=True,
     )
-    git_subrepo(
-        f'clone ../share share -b {env.defaultbranch}',
-        cwd=main1_dir
-    )
+    git_subrepo(f'clone ../share share -b {env.defaultbranch}', cwd=main1_dir)
 
     # Clone the share repo into main2
     (main2_dir / 'main2').touch()
@@ -59,12 +57,9 @@ def test_issue29(env):
         ['git', 'commit', '-m', 'Initial main2'],
         cwd=main2_dir,
         check=True,
-        capture_output=True
+        capture_output=True,
     )
-    git_subrepo(
-        f'clone ../share share -b {env.defaultbranch}',
-        cwd=main2_dir
-    )
+    git_subrepo(f'clone ../share share -b {env.defaultbranch}', cwd=main2_dir)
 
     # Make a change to the main1 subrepo and push it
     msg_main1 = "main1 initial add to subrepo"
@@ -76,7 +71,7 @@ def test_issue29(env):
         ['git', 'commit', '-m', msg_main1],
         cwd=main1_dir,
         check=True,
-        capture_output=True
+        capture_output=True,
     )
     git_subrepo('push share', cwd=main1_dir)
 
@@ -86,9 +81,11 @@ def test_issue29(env):
         cwd=main1_dir,
         capture_output=True,
         text=True,
-        check=True
+        check=True,
     )
-    assert result.stdout.strip() == '', "The subrepo-push/share branch was deleted after push"
+    assert result.stdout.strip() == '', (
+        "The subrepo-push/share branch was deleted after push"
+    )
 
     # Pull in the subrepo changes from above into main2
     # Make a local change to the main2 subrepo and push it
@@ -102,7 +99,7 @@ def test_issue29(env):
         ['git', 'commit', '-m', msg_main2],
         cwd=main2_dir,
         check=True,
-        capture_output=True
+        capture_output=True,
     )
     git_subrepo('push share', cwd=main2_dir)
 
@@ -115,5 +112,5 @@ def test_issue29(env):
     assert_output_matches(
         readme_content,
         expected,
-        "The readme file in the share repo has both subrepo commits"
+        "The readme file in the share repo has both subrepo commits",
     )

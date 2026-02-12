@@ -1,10 +1,8 @@
 """Tests for git subrepo branch command"""
+
 import subprocess
 import time
-from pathlib import Path
-from conftest import (
-    assert_exists, git_subrepo, assert_output_matches
-)
+from conftest import assert_exists, git_subrepo, assert_output_matches
 
 
 def test_branch(env):
@@ -27,7 +25,7 @@ def test_branch(env):
         cwd=env.owner / 'foo',
         capture_output=True,
         text=True,
-        check=True
+        check=True,
     ).stdout.strip()
     original_gitrepo = (env.owner / 'foo' / 'bar' / '.gitrepo').read_text()
 
@@ -38,7 +36,7 @@ def test_branch(env):
     assert_output_matches(
         result.stdout.strip(),
         "Created branch 'subrepo/bar' and worktree '.git/tmp/subrepo/bar'.",
-        "subrepo branch command output is correct"
+        "subrepo branch command output is correct",
     )
 
     # Check timestamp after
@@ -51,19 +49,23 @@ def test_branch(env):
         cwd=env.owner / 'foo',
         capture_output=True,
         text=True,
-        check=True
+        check=True,
     ).stdout.strip()
     current_gitrepo = (env.owner / 'foo' / 'bar' / '.gitrepo').read_text()
 
     assert current_head_ref == original_head_ref, "Current HEAD is still same"
-    assert current_head_commit == original_head_commit, "Current HEAD commit is still same"
+    assert current_head_commit == original_head_commit, (
+        "Current HEAD commit is still same"
+    )
     assert current_gitrepo == original_gitrepo, "bar/.gitrepo has not changed"
 
     # Check that we haven't checked out any temporary files
     assert before == after, "No modification on Foo"
 
     # Check temporary directory exists
-    assert_exists(env.owner / 'foo' / '.git' / 'tmp' / 'subrepo' / 'bar', should_exist=True)
+    assert_exists(
+        env.owner / 'foo' / '.git' / 'tmp' / 'subrepo' / 'bar', should_exist=True
+    )
 
     # Check that correct branch is checked out
     result = subprocess.run(
@@ -71,7 +73,7 @@ def test_branch(env):
         cwd=env.owner / 'foo' / '.git' / 'tmp' / 'subrepo' / 'bar',
         capture_output=True,
         text=True,
-        check=True
+        check=True,
     )
     current_branch = [line for line in result.stdout.split('\n') if '*' in line][0]
     assert current_branch.strip() == '* subrepo/bar', "Correct branch is checked out"

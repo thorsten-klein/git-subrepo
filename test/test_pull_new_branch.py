@@ -1,8 +1,12 @@
 """Tests for git subrepo pull with new branch"""
+
 import subprocess
 from conftest import (
-    assert_gitrepo_comment_block, assert_gitrepo_field,
-    git_rev_parse, git_subrepo, assert_output_matches
+    assert_gitrepo_comment_block,
+    assert_gitrepo_field,
+    git_rev_parse,
+    git_subrepo,
+    assert_output_matches,
 )
 
 
@@ -16,13 +20,13 @@ def test_pull_new_branch(env):
         ['git', 'checkout', '-b', 'branch1'],
         cwd=env.owner / 'bar',
         check=True,
-        capture_output=True
+        capture_output=True,
     )
     subprocess.run(
         ['git', 'push', '--set-upstream', 'origin', 'branch1'],
         cwd=env.owner / 'bar',
         check=True,
-        capture_output=True
+        capture_output=True,
     )
 
     # Test subrepo file content
@@ -60,5 +64,5 @@ def test_pull_new_branch(env):
     assert_output_matches(
         result.stdout.strip(),
         "Subrepo 'bar' is up to date.",
-        'subrepo detects that we dont need to pull'
+        'subrepo detects that we dont need to pull',
     )

@@ -1,6 +1,6 @@
 """Tests for git-subrepo compilation"""
+
 import subprocess
-from pathlib import Path
 
 
 def test_compile(env):
@@ -11,7 +11,6 @@ def test_compile(env):
         cwd=env.test_dir,
         capture_output=True,
         text=True,
-        check=False
+        check=False,
     )
     assert result.returncode == 0, 'source lib/git-subrepo should succeed'
-

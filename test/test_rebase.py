@@ -1,8 +1,7 @@
 """Tests for git subrepo with rebase"""
+
 import subprocess
-from conftest import (
-    git_subrepo, assert_output_like
-)
+from conftest import git_subrepo, assert_output_like
 
 
 def test_rebase(env):
@@ -17,7 +16,7 @@ def test_rebase(env):
         ['git', 'switch', '-c', 'branch1'],
         cwd=env.owner / 'foo',
         check=True,
-        capture_output=True
+        capture_output=True,
     )
     env.add_new_files('foo1', cwd=env.owner / 'foo')
     env.subrepo_clone_bar_into_foo()
@@ -26,13 +25,15 @@ def test_rebase(env):
         ['git', 'branch', 'branch2'],
         cwd=env.owner / 'foo',
         check=True,
-        capture_output=True
+        capture_output=True,
     )
     env.add_new_files('foo2', cwd=env.owner / 'foo')
 
     # Add new file in bar and push
     env.add_new_files('bar2', cwd=env.owner / 'bar')
-    subprocess.run(['git', 'push'], cwd=env.owner / 'bar', check=True, capture_output=True)
+    subprocess.run(
+        ['git', 'push'], cwd=env.owner / 'bar', check=True, capture_output=True
+    )
 
     # Pull subrepo
     git_subrepo('pull bar', cwd=env.owner / 'foo')
@@ -42,7 +43,7 @@ def test_rebase(env):
         ['git', 'switch', 'branch2'],
         cwd=env.owner / 'foo',
         check=True,
-        capture_output=True
+        capture_output=True,
     )
     env.add_new_files('foo-branch2', cwd=env.owner / 'foo')
 
@@ -50,13 +51,13 @@ def test_rebase(env):
         ['git', 'switch', 'branch1'],
         cwd=env.owner / 'foo',
         check=True,
-        capture_output=True
+        capture_output=True,
     )
     subprocess.run(
         ['git', 'rebase', 'branch2'],
         cwd=env.owner / 'foo',
         check=True,
-        capture_output=True
+        capture_output=True,
     )
 
     # Force subrepo to search for the parent SHA
@@ -64,8 +65,4 @@ def test_rebase(env):
     git_subrepo('clean --force --all', cwd=env.owner / 'foo')
     output = env.catch('git subrepo branch bar', cwd=env.owner / 'foo')
 
-    assert_output_like(
-        output,
-        'caused by a rebase',
-        "subrepo detected merge point"
-    )
+    assert_output_like(output, 'caused by a rebase', "subrepo detected merge point")

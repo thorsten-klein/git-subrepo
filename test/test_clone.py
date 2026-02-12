@@ -1,10 +1,15 @@
 """Tests for git subrepo clone command"""
+
 import subprocess
-from pathlib import Path
 from conftest import (
-    assert_exists, assert_file_exists, assert_dir_exists,
-    assert_gitrepo_comment_block, assert_gitrepo_field,
-    git_rev_parse, git_subrepo, assert_output_matches
+    assert_exists,
+    assert_file_exists,
+    assert_dir_exists,
+    assert_gitrepo_comment_block,
+    assert_gitrepo_field,
+    git_rev_parse,
+    git_subrepo,
+    assert_output_matches,
 )
 
 
@@ -30,7 +35,7 @@ def test_clone(env):
     assert_output_matches(
         result.stdout.strip(),
         f"Subrepo '{env.upstream}/bar' (master) cloned into 'bar'.",
-        'subrepo clone command output is correct'
+        'subrepo clone command output is correct',
     )
 
     # Check no remotes created
@@ -39,7 +44,7 @@ def test_clone(env):
         cwd=env.owner / 'foo',
         capture_output=True,
         text=True,
-        check=True
+        check=True,
     )
     remotes = [line for line in result.stdout.split('\n') if 'subrepo/bar' in line]
     assert len(remotes) == 0, 'No remotes created'
@@ -49,7 +54,7 @@ def test_clone(env):
     assert_output_matches(
         result.stderr.strip(),
         "git-subrepo: You can't clone into an empty repository",
-        'subrepo empty clone command output is correct'
+        'subrepo empty clone command output is correct',
     )
 
     # Check that subrepo files look ok
@@ -80,7 +85,7 @@ def test_clone(env):
         cwd=env.owner / 'foo',
         capture_output=True,
         text=True,
-        check=True
+        check=True,
     )
     assert result.stdout.strip() == '', 'status is clean'
 
@@ -89,6 +94,6 @@ def test_clone(env):
         cwd=empty_dir,
         capture_output=True,
         text=True,
-        check=True
+        check=True,
     )
     assert result.stdout.strip() == '', 'status is clean (empty)'

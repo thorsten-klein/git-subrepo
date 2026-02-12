@@ -1,9 +1,8 @@
 """Tests for git subrepo error messages"""
+
 import subprocess
 import os
-from conftest import (
-    git_subrepo, assert_output_matches, assert_output_like
-)
+from conftest import git_subrepo, assert_output_matches, assert_output_like
 
 
 def test_error(env):
@@ -24,7 +23,7 @@ def test_error(env):
         assert_output_matches(
             output,
             "git-subrepo: Branch 'subrepo/foo' already exists. Use '--force' to override.",
-            "Error OK: can't create a branch that exists"
+            "Error OK: can't create a branch that exists",
         )
 
         git_subrepo('--quiet clean foo', cwd=env.owner / 'bar')
@@ -32,15 +31,13 @@ def test_error(env):
             ['git', 'reset', '--quiet', '--hard', 'HEAD^'],
             cwd=env.owner / 'bar',
             check=True,
-            capture_output=True
+            capture_output=True,
         )
 
         # Test: unknown command option
         output = env.catch('git subrepo clone --foo', cwd=env.owner / 'bar')
         assert_output_like(
-            output,
-            "error: unknown option `foo",
-            "Error OK: unknown command option"
+            output, "error: unknown option `foo", "Error OK: unknown command option"
         )
 
         # Test: unknown command
@@ -48,7 +45,7 @@ def test_error(env):
         assert_output_matches(
             output,
             "git-subrepo: 'main' is not a command. See 'git subrepo help'.",
-            "Error OK: unknown command"
+            "Error OK: unknown command",
         )
 
         # Test: --update requires --branch or --remote options
@@ -56,7 +53,7 @@ def test_error(env):
         assert_output_matches(
             output,
             "git-subrepo: Can't use '--update' without '--branch' or '--remote'.",
-            "Error OK: --update requires --branch or --remote options"
+            "Error OK: --update requires --branch or --remote options",
         )
 
         # Test: Invalid option '--all' for 'clone'
@@ -64,7 +61,7 @@ def test_error(env):
         assert_output_matches(
             output,
             "git-subrepo: Invalid option '--all' for 'clone'.",
-            "Error OK: Invalid option '--all' for 'clone'"
+            "Error OK: Invalid option '--all' for 'clone'",
         )
 
         # Test: check subdir is not absolute path
@@ -72,7 +69,7 @@ def test_error(env):
         assert_output_like(
             output,
             "git-subrepo: The subdir '.*/home/user/bar/foo' should not be absolute path.",
-            "Error OK: check subdir is not absolute path"
+            "Error OK: check subdir is not absolute path",
         )
 
         # Test: commands require subdir
@@ -81,7 +78,7 @@ def test_error(env):
             assert_output_matches(
                 output,
                 f"git-subrepo: Command '{cmd}' requires arg 'subdir'.",
-                f"Error OK: check that '{cmd}' requires subdir"
+                f"Error OK: check that '{cmd}' requires subdir",
             )
 
         # Test: extra arguments for clone
@@ -89,7 +86,7 @@ def test_error(env):
         assert_output_matches(
             output,
             "git-subrepo: Unknown argument(s) 'baz quux' for 'clone' command.",
-            "Error OK: extra arguments for clone"
+            "Error OK: extra arguments for clone",
         )
 
         # Test: check error in subdir guess
@@ -97,7 +94,7 @@ def test_error(env):
         assert_output_matches(
             output,
             "git-subrepo: Can't determine subdir from '.git'.",
-            "Error OK: check error in subdir guess"
+            "Error OK: check error in subdir guess",
         )
 
         # Test: check for valid subrepo subdir
@@ -105,7 +102,7 @@ def test_error(env):
         assert_output_matches(
             output,
             "git-subrepo: No 'lala/.gitrepo' file.",
-            "Error OK: check for valid subrepo subdir"
+            "Error OK: check for valid subrepo subdir",
         )
 
         # Test: check repo is on a branch
@@ -114,25 +111,25 @@ def test_error(env):
             cwd=env.owner / 'bar',
             capture_output=True,
             text=True,
-            check=True
+            check=True,
         ).stdout.strip()
         subprocess.run(
             ['git', 'checkout', '--quiet', commit],
             cwd=env.owner / 'bar',
             check=True,
-            capture_output=True
+            capture_output=True,
         )
         output = env.catch('git subrepo status', cwd=env.owner / 'bar')
         assert_output_matches(
             output,
             "git-subrepo: Must be on a branch to run this command.",
-            "Error OK: check repo is on a branch"
+            "Error OK: check repo is on a branch",
         )
         subprocess.run(
             ['git', 'checkout', '--quiet', 'master'],
             cwd=env.owner / 'bar',
             check=True,
-            capture_output=True
+            capture_output=True,
         )
 
         # Test: check inside working tree
@@ -140,23 +137,25 @@ def test_error(env):
         assert_output_like(
             output,
             "git-subrepo: (Can't 'subrepo status' outside a working tree\\.|Not inside a git repository\\.)",
-            "Error OK: check inside working tree"
+            "Error OK: check inside working tree",
         )
 
         # Test: check no working tree changes
         (env.owner / 'bar' / 'me').touch()
         subprocess.run(['git', 'add', 'me'], cwd=env.owner / 'bar', check=True)
-        output = env.catch(f'git subrepo clone {env.upstream}/foo', cwd=env.owner / 'bar')
+        output = env.catch(
+            f'git subrepo clone {env.upstream}/foo', cwd=env.owner / 'bar'
+        )
         assert_output_like(
             output,
             "git-subrepo: Can't clone subrepo. Working tree has changes.",
-            "Error OK: check no working tree changes"
+            "Error OK: check no working tree changes",
         )
         subprocess.run(
             ['git', 'reset', '--quiet', '--hard'],
             cwd=env.owner / 'bar',
             check=True,
-            capture_output=True
+            capture_output=True,
         )
 
         # Test: check cwd is at top level
@@ -164,7 +163,7 @@ def test_error(env):
         assert_output_like(
             output,
             "git-subrepo: (Need to run subrepo command from top level directory of the repo\\.|Not inside a git repository\\.)",
-            "Error OK: check cwd is at top level"
+            "Error OK: check cwd is at top level",
         )
 
         # Test: non-empty clone subdir target
@@ -172,7 +171,7 @@ def test_error(env):
         assert_output_matches(
             output,
             "git-subrepo: The subdir 'bard' exists and is not empty.",
-            "Error OK: non-empty clone subdir target"
+            "Error OK: non-empty clone subdir target",
         )
 
         # Test: clone non-repo
@@ -180,7 +179,7 @@ def test_error(env):
         assert_output_matches(
             output,
             "git-subrepo: Command failed: 'git ls-remote --symref dummy-repo'.",
-            "Error OK: clone non-repo"
+            "Error OK: clone non-repo",
         )
 
     finally:

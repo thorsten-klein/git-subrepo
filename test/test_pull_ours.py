@@ -1,9 +1,8 @@
 """Tests for git subrepo pull with conflict resolution using ours"""
+
 import subprocess
 import time
-from conftest import (
-    assert_exists, git_subrepo, assert_output_matches
-)
+from conftest import assert_exists, git_subrepo, assert_output_matches
 
 
 def test_pull_ours(env):
@@ -17,17 +16,23 @@ def test_pull_ours(env):
 
     # Add new file to bar and push
     env.add_new_files('Bar2', cwd=env.owner / 'bar')
-    subprocess.run(['git', 'push'], cwd=env.owner / 'bar', check=True, capture_output=True)
+    subprocess.run(
+        ['git', 'push'], cwd=env.owner / 'bar', check=True, capture_output=True
+    )
 
     # Pull, modify in foo, and push
     git_subrepo('pull bar', cwd=env.owner / 'foo')
     env.modify_files_ex('bar/Bar2', cwd=env.owner / 'foo')
     subprocess.run(['cat', 'bar/Bar2'], cwd=env.owner / 'foo', check=True)
-    subprocess.run(['git', 'push'], cwd=env.owner / 'foo', check=True, capture_output=True)
+    subprocess.run(
+        ['git', 'push'], cwd=env.owner / 'foo', check=True, capture_output=True
+    )
 
     # Modify in bar and push
     env.modify_files_ex('Bar2', cwd=env.owner / 'bar')
-    subprocess.run(['git', 'push'], cwd=env.owner / 'bar', check=True, capture_output=True)
+    subprocess.run(
+        ['git', 'push'], cwd=env.owner / 'bar', check=True, capture_output=True
+    )
 
     # Get timestamp before
     foo_file = env.owner / 'foo' / 'Foo'
@@ -38,7 +43,9 @@ def test_pull_ours(env):
     if result.returncode != 0:
         # Resolve conflict using ours
         worktree_dir = env.owner / 'foo' / '.git' / 'tmp' / 'subrepo' / 'bar'
-        subprocess.run(['git', 'checkout', '--ours', 'Bar2'], cwd=worktree_dir, check=True)
+        subprocess.run(
+            ['git', 'checkout', '--ours', 'Bar2'], cwd=worktree_dir, check=True
+        )
         subprocess.run(['git', 'add', 'Bar2'], cwd=worktree_dir, check=True)
 
         merge_msg_file = env.owner / 'foo' / '.git' / 'worktrees' / 'bar' / 'MERGE_MSG'
@@ -46,7 +53,7 @@ def test_pull_ours(env):
             ['git', 'commit', f'--file={merge_msg_file}'],
             cwd=worktree_dir,
             check=True,
-            capture_output=True
+            capture_output=True,
         )
 
         git_subrepo('commit bar', cwd=env.owner / 'foo')
@@ -65,16 +72,16 @@ def test_pull_ours(env):
     bar2_content = (env.owner / 'foo' / 'bar' / 'Bar2').read_text()
     expected = 'new file Bar2\nbar/Bar2\n'
     assert_output_matches(
-        bar2_content,
-        expected,
-        "The readme file in the mainrepo is ours"
+        bar2_content, expected, "The readme file in the mainrepo is ours"
     )
 
     # Push
     git_subrepo('push bar', cwd=env.owner / 'foo')
 
     # Pull in bar
-    subprocess.run(['git', 'pull'], cwd=env.owner / 'bar', check=True, capture_output=True)
+    subprocess.run(
+        ['git', 'pull'], cwd=env.owner / 'bar', check=True, capture_output=True
+    )
 
     # Check files
     assert_exists(env.owner / 'foo' / 'bar' / 'Bar2', should_exist=True)
@@ -83,7 +90,5 @@ def test_pull_ours(env):
     # Check result in subrepo
     bar2_content = (env.owner / 'bar' / 'Bar2').read_text()
     assert_output_matches(
-        bar2_content,
-        expected,
-        "The readme file in the subrepo is ours"
+        bar2_content, expected, "The readme file in the subrepo is ours"
     )

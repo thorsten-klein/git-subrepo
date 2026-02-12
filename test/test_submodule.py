@@ -1,8 +1,7 @@
 """Tests for git subrepo with submodules"""
+
 import subprocess
-from conftest import (
-    git_subrepo, assert_output_matches
-)
+from conftest import git_subrepo, assert_output_matches
 
 
 def test_submodule(env):
@@ -14,15 +13,17 @@ def test_submodule(env):
         ['git', 'clone', '../foo', 'submodule'],
         cwd=env.owner / 'bar',
         check=True,
-        capture_output=True
+        capture_output=True,
     )
     env.add_new_files('file', cwd=env.owner / 'bar')
-    subprocess.run(['git', 'add', 'submodule', 'file'], cwd=env.owner / 'bar', check=True)
+    subprocess.run(
+        ['git', 'add', 'submodule', 'file'], cwd=env.owner / 'bar', check=True
+    )
     subprocess.run(
         ['git', 'commit', '--amend', '-C', 'HEAD'],
         cwd=env.owner / 'bar',
         check=True,
-        capture_output=True
+        capture_output=True,
     )
 
     # Clone bar into foo
@@ -37,5 +38,5 @@ def test_submodule(env):
     assert_output_matches(
         result.stdout.strip(),
         "Subrepo 'bar' pulled from '../bar' (master).",
-        'subrepo pull command output is correct'
+        'subrepo pull command output is correct',
     )

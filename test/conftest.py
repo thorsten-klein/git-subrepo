@@ -1,11 +1,10 @@
 """Pytest configuration and fixtures for git-subrepo tests"""
+
 import os
 import re
 import shutil
 import subprocess
-import tempfile
 from pathlib import Path
-from typing import Optional
 
 import pytest
 
@@ -23,10 +22,7 @@ class TestEnvironment:
 
         # Get default branch
         git_version = subprocess.run(
-            ['git', '--version'],
-            capture_output=True,
-            text=True,
-            check=True
+            ['git', '--version'], capture_output=True, text=True, check=True
         ).stdout.strip()
         match = re.search(r'(\d+)\.(\d+)', git_version)
         if match:
@@ -37,9 +33,11 @@ class TestEnvironment:
                     ['git', 'config', '--global', '--get', 'init.defaultbranch'],
                     capture_output=True,
                     text=True,
-                    check=False
+                    check=False,
                 )
-                self.defaultbranch = result.stdout.strip() if result.returncode == 0 else 'master'
+                self.defaultbranch = (
+                    result.stdout.strip() if result.returncode == 0 else 'master'
+                )
             else:
                 self.defaultbranch = 'master'
         else:
@@ -54,15 +52,11 @@ class TestEnvironment:
                 cwd=cwd,
                 capture_output=capture_output,
                 text=True,
-                check=check
+                check=check,
             )
         else:
             result = subprocess.run(
-                cmd,
-                cwd=cwd,
-                capture_output=capture_output,
-                text=True,
-                check=check
+                cmd, cwd=cwd, capture_output=capture_output, text=True, check=check
             )
         return result
 
@@ -82,10 +76,7 @@ class TestEnvironment:
 
     def subrepo_clone_bar_into_foo(self):
         """Clone bar subrepo into foo"""
-        self.run(
-            f'git subrepo clone "{self.upstream}/bar"',
-            cwd=self.owner / 'foo'
-        )
+        self.run(f'git subrepo clone "{self.upstream}/bar"', cwd=self.owner / 'foo')
 
     def add_new_files(self, *files, cwd=None):
         """Add new files and commit"""
@@ -95,14 +86,18 @@ class TestEnvironment:
             file_path.write_text(f"new file {file}\n")
             self.run(['git', 'add', '--force', str(file)], cwd=cwd)
         # Commit with the last file name
-        self.run(['git', 'commit', '--quiet', '-m', f'add new file: {files[-1]}'], cwd=cwd)
+        self.run(
+            ['git', 'commit', '--quiet', '-m', f'add new file: {files[-1]}'], cwd=cwd
+        )
 
     def remove_files(self, *files, cwd=None):
         """Remove files and commit"""
         for file in files:
             self.run(['git', 'rm', file], cwd=cwd)
         # Commit with the last file name
-        self.run(['git', 'commit', '--quiet', '-m', f'Removed file: {files[-1]}'], cwd=cwd)
+        self.run(
+            ['git', 'commit', '--quiet', '-m', f'Removed file: {files[-1]}'], cwd=cwd
+        )
 
     def modify_files(self, *files, cwd=None):
         """Modify files and commit"""
@@ -126,7 +121,9 @@ class TestEnvironment:
         """Catch command output (including errors)"""
         result = self.run(cmd, cwd=cwd, check=False)
         # Return stderr if command failed, otherwise stdout
-        return result.stderr.strip() if result.returncode != 0 else result.stdout.strip()
+        return (
+            result.stderr.strip() if result.returncode != 0 else result.stdout.strip()
+        )
 
 
 @pytest.fixture(scope='function')
@@ -161,26 +158,30 @@ def env(tmp_path):
 
     # Set up git configuration
     subprocess.run(['git', 'config', '--global', 'user.name', 'Test User'], check=True)
-    subprocess.run(['git', 'config', '--global', 'user.email', 'test@example.com'], check=True)
+    subprocess.run(
+        ['git', 'config', '--global', 'user.email', 'test@example.com'], check=True
+    )
     subprocess.run(['git', 'config', '--global', 'core.autocrlf', 'input'], check=True)
     subprocess.run(['git', 'config', '--global', 'core.filemode', 'true'], check=True)
     subprocess.run(['git', 'config', '--global', 'pull.rebase', 'false'], check=True)
-    subprocess.run(['git', 'config', '--global', 'advice.detachedHead', 'false'], check=True)
+    subprocess.run(
+        ['git', 'config', '--global', 'advice.detachedHead', 'false'], check=True
+    )
     subprocess.run(['git', 'config', '--global', 'color.ui', 'false'], check=True)
 
     # Set init.defaultBranch if supported
     git_version = subprocess.run(
-        ['git', '--version'],
-        capture_output=True,
-        text=True,
-        check=True
+        ['git', '--version'], capture_output=True, text=True, check=True
     ).stdout.strip()
     match = re.search(r'(\d+)\.(\d+)', git_version)
     if match:
         git_major = int(match.group(1))
         git_minor = int(match.group(2))
         if git_major > 2 or (git_major == 2 and git_minor >= 28):
-            subprocess.run(['git', 'config', '--global', 'init.defaultBranch', 'master'], check=True)
+            subprocess.run(
+                ['git', 'config', '--global', 'init.defaultBranch', 'master'],
+                check=True,
+            )
 
     # Create test directories
     test_env.upstream.mkdir(parents=True)
@@ -253,7 +254,7 @@ def assert_in_index(file_path, cwd, should_exist=True):
         cwd=cwd,
         capture_output=True,
         text=True,
-        check=False
+        check=False,
     )
     exists = bool(result.stdout.strip())
     if should_exist:
@@ -277,7 +278,9 @@ def assert_gitrepo_comment_block(gitrepo_path):
     comment_lines = [line for line in content.split('\n') if line.startswith(';')]
     actual = '\n'.join(comment_lines)
 
-    assert actual == expected, f"Comment block mismatch.\nExpected:\n{expected}\nActual:\n{actual}"
+    assert actual == expected, (
+        f"Comment block mismatch.\nExpected:\n{expected}\nActual:\n{actual}"
+    )
 
 
 def assert_gitrepo_field(gitrepo_path, field, expected_value):
@@ -286,11 +289,12 @@ def assert_gitrepo_field(gitrepo_path, field, expected_value):
         ['git', 'config', f'--file={gitrepo_path}', f'subrepo.{field}'],
         capture_output=True,
         text=True,
-        check=False
+        check=False,
     )
     actual_value = result.stdout.strip()
-    assert actual_value == expected_value, \
+    assert actual_value == expected_value, (
         f".gitrepo field '{field}' should be '{expected_value}' but is '{actual_value}'"
+    )
 
 
 def assert_commit_count(repo_path, ref, expected_count):
@@ -300,21 +304,18 @@ def assert_commit_count(repo_path, ref, expected_count):
         cwd=repo_path,
         capture_output=True,
         text=True,
-        check=True
+        check=True,
     )
     actual_count = int(result.stdout.strip())
-    assert actual_count == expected_count, \
+    assert actual_count == expected_count, (
         f"Commit count should be {expected_count} but is {actual_count}"
+    )
 
 
 def git_rev_parse(ref, cwd):
     """Get commit SHA for a ref"""
     result = subprocess.run(
-        ['git', 'rev-parse', ref],
-        cwd=cwd,
-        capture_output=True,
-        text=True,
-        check=True
+        ['git', 'rev-parse', ref], cwd=cwd, capture_output=True, text=True, check=True
     )
     return result.stdout.strip()
 
@@ -326,13 +327,7 @@ def git_config(key, cwd, file=None):
         cmd.extend([f'--file={file}'])
     cmd.append(key)
 
-    result = subprocess.run(
-        cmd,
-        cwd=cwd,
-        capture_output=True,
-        text=True,
-        check=False
-    )
+    result = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True, check=False)
     return result.stdout.strip() if result.returncode == 0 else None
 
 
@@ -349,36 +344,39 @@ def git_subrepo(args, cwd, check=True):
         cwd=cwd,
         capture_output=True,
         text=True,
-        check=check
+        check=check,
     )
     return result
 
 
 def assert_output_matches(actual, expected, description=""):
     """Assert that output matches expected value"""
-    assert actual == expected, \
-        f"{description}\nExpected: {expected}\nActual: {actual}"
+    assert actual == expected, f"{description}\nExpected: {expected}\nActual: {actual}"
 
 
 def assert_output_contains(output, pattern, description=""):
     """Assert that output contains pattern"""
-    assert pattern in output, \
+    assert pattern in output, (
         f"{description}\nPattern '{pattern}' not found in:\n{output}"
+    )
 
 
 def assert_output_not_contains(output, pattern, description=""):
     """Assert that output doesn't contain pattern"""
-    assert pattern not in output, \
+    assert pattern not in output, (
         f"{description}\nPattern '{pattern}' should not be in:\n{output}"
+    )
 
 
 def assert_output_like(output, pattern, description=""):
     """Assert that output matches regex pattern"""
-    assert re.search(pattern, output), \
+    assert re.search(pattern, output), (
         f"{description}\nPattern '{pattern}' not found in:\n{output}"
+    )
 
 
 def assert_output_unlike(output, pattern, description=""):
     """Assert that output doesn't match regex pattern"""
-    assert not re.search(pattern, output), \
+    assert not re.search(pattern, output), (
         f"{description}\nPattern '{pattern}' should not be found in:\n{output}"
+    )

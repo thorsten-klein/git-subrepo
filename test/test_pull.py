@@ -1,11 +1,15 @@
 """Tests for git subrepo pull command"""
+
 import subprocess
-from pathlib import Path
 from conftest import (
-    assert_exists, assert_file_exists,
-    assert_gitrepo_comment_block, assert_gitrepo_field,
-    git_rev_parse, git_subrepo, assert_output_matches,
-    assert_output_like
+    assert_exists,
+    assert_file_exists,
+    assert_gitrepo_comment_block,
+    assert_gitrepo_field,
+    git_rev_parse,
+    git_subrepo,
+    assert_output_matches,
+    assert_output_like,
 )
 
 
@@ -16,14 +20,16 @@ def test_pull(env):
 
     # Add new file to bar and push
     env.add_new_files('Bar2', cwd=env.owner / 'bar')
-    subprocess.run(['git', 'push'], cwd=env.owner / 'bar', check=True, capture_output=True)
+    subprocess.run(
+        ['git', 'push'], cwd=env.owner / 'bar', check=True, capture_output=True
+    )
 
     # Do the pull and check output
     result = git_subrepo('pull bar', cwd=env.owner / 'foo')
     assert_output_matches(
         result.stdout.strip(),
         f"Subrepo 'bar' pulled from '{env.upstream}/bar' (master).",
-        'subrepo pull command output is correct'
+        'subrepo pull command output is correct',
     )
 
     # Test subrepo file content
@@ -52,27 +58,25 @@ def test_pull(env):
         cwd=env.owner / 'foo',
         capture_output=True,
         text=True,
-        check=True
+        check=True,
     )
     foo_new_commit_message = result.stdout.strip()
 
     assert_output_like(
-        foo_new_commit_message,
-        'git subrepo pull bar',
-        'Subrepo pull commit message OK'
+        foo_new_commit_message, 'git subrepo pull bar', 'Subrepo pull commit message OK'
     )
 
     bar_commit_short = subprocess.run(
         ['git', 'rev-parse', '--short', bar_head_commit],
         capture_output=True,
         text=True,
-        check=True
+        check=True,
     ).stdout.strip()
 
     assert_output_like(
         foo_new_commit_message,
         f'merged:   "{bar_commit_short}',
-        'Pull commit contains merged'
+        'Pull commit contains merged',
     )
 
     # Check that we detect that we don't need to pull
@@ -80,7 +84,7 @@ def test_pull(env):
     assert_output_matches(
         result.stdout.strip(),
         "Subrepo 'bar' is up to date.",
-        'subrepo detects that we dont need to pull'
+        'subrepo detects that we dont need to pull',
     )
 
     # Test pull if we have rebased the original subrepo so that our clone
@@ -89,14 +93,14 @@ def test_pull(env):
         ['git', 'reset', '--hard', 'master^^'],
         cwd=env.owner / 'bar',
         check=True,
-        capture_output=True
+        capture_output=True,
     )
     env.add_new_files('Bar3', cwd=env.owner / 'bar')
     subprocess.run(
         ['git', 'push', '--force'],
         cwd=env.owner / 'bar',
         check=True,
-        capture_output=True
+        capture_output=True,
     )
 
     # Check that pull_failed doesn't exist yet

@@ -1,8 +1,7 @@
 """Tests for git subrepo branch --all command"""
+
 import subprocess
-from conftest import (
-    assert_exists
-)
+from conftest import assert_exists
 
 
 def test_branch_all(env):
@@ -14,13 +13,13 @@ def test_branch_all(env):
         ['git', 'subrepo', 'clone', '--quiet', str(env.upstream / 'bar'), 'one'],
         cwd=env.owner / 'foo',
         check=True,
-        capture_output=True
+        capture_output=True,
     )
     subprocess.run(
         ['git', 'subrepo', 'clone', '--quiet', str(env.upstream / 'bar'), 'two'],
         cwd=env.owner / 'foo',
         check=True,
-        capture_output=True
+        capture_output=True,
     )
     env.add_new_files('two/file', cwd=env.owner / 'foo')
 
@@ -30,10 +29,12 @@ def test_branch_all(env):
         cwd=env.owner / 'foo',
         capture_output=True,
         text=True,
-        check=True
+        check=True,
     )
 
-    assert result.returncode == 0, "branch command works with --all even when a subrepo has no new commits"
+    assert result.returncode == 0, (
+        "branch command works with --all even when a subrepo has no new commits"
+    )
 
     # Check that subrepo/two branch exists
     result = subprocess.run(
@@ -41,12 +42,14 @@ def test_branch_all(env):
         cwd=env.owner / 'foo',
         capture_output=True,
         text=True,
-        check=True
+        check=True,
     )
     assert result.stdout.strip() != '', "The 'subrepo/two' branch exists"
 
     # Check worktree exists
-    assert_exists(env.owner / 'foo' / '.git' / 'tmp' / 'subrepo' / 'two', should_exist=True)
+    assert_exists(
+        env.owner / 'foo' / '.git' / 'tmp' / 'subrepo' / 'two', should_exist=True
+    )
 
     # Check that subrepo/one branch exists
     result = subprocess.run(
@@ -54,9 +57,11 @@ def test_branch_all(env):
         cwd=env.owner / 'foo',
         capture_output=True,
         text=True,
-        check=True
+        check=True,
     )
     assert result.stdout.strip() != '', "The 'subrepo/one' branch exists"
 
     # Check worktree exists
-    assert_exists(env.owner / 'foo' / '.git' / 'tmp' / 'subrepo' / 'one', should_exist=True)
+    assert_exists(
+        env.owner / 'foo' / '.git' / 'tmp' / 'subrepo' / 'one', should_exist=True
+    )

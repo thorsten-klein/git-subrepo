@@ -1,7 +1,11 @@
 """Tests for git subrepo push --squash"""
+
 import subprocess
 from conftest import (
-    assert_exists, assert_commit_count, git_subrepo, assert_output_matches
+    assert_exists,
+    assert_commit_count,
+    git_subrepo,
+    assert_output_matches,
 )
 
 
@@ -25,11 +29,13 @@ def test_push_squash(env):
     assert_output_matches(
         result.stdout.strip(),
         f"Subrepo 'bar' pushed to '{env.upstream}/bar' (master).",
-        'push message is correct'
+        'push message is correct',
     )
 
     # Pull in bar
-    subprocess.run(['git', 'pull'], cwd=env.owner / 'bar', check=True, capture_output=True)
+    subprocess.run(
+        ['git', 'pull'], cwd=env.owner / 'bar', check=True, capture_output=True
+    )
 
     # Check that all commits arrived in subrepo (squashed to 1 commit + initial 2)
     assert_commit_count(env.owner / 'bar', 'HEAD', 3)

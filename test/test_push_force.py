@@ -1,8 +1,7 @@
 """Tests for git subrepo push --force"""
+
 import subprocess
-from conftest import (
-    assert_exists, git_subrepo
-)
+from conftest import assert_exists, git_subrepo
 
 
 def test_push_force(env):
@@ -12,7 +11,9 @@ def test_push_force(env):
 
     # Add new file to bar and push
     env.add_new_files('Bar2', cwd=env.owner / 'bar')
-    subprocess.run(['git', 'push'], cwd=env.owner / 'bar', check=True, capture_output=True)
+    subprocess.run(
+        ['git', 'push'], cwd=env.owner / 'bar', check=True, capture_output=True
+    )
 
     # Add file in foo and force push
     env.add_new_files('bar/Foo1', cwd=env.owner / 'foo')
@@ -30,7 +31,7 @@ def test_push_force(env):
         ['git', 'pull', '--rebase=false'],
         cwd=env.owner / 'bar',
         check=True,
-        capture_output=True
+        capture_output=True,
     )
 
     # After merge, both files should exist
@@ -42,7 +43,7 @@ def test_push_force(env):
     subprocess.run(
         ['git', 'clone', str(env.upstream / 'bar'), str(new_bar_dir)],
         check=True,
-        capture_output=True
+        capture_output=True,
     )
 
     # Fresh clone should only have Foo1, not Bar2

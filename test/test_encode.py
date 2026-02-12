@@ -1,8 +1,7 @@
 """Tests for git subrepo with special characters in directory names"""
+
 import subprocess
-from conftest import (
-    assert_exists, git_subrepo, assert_output_matches
-)
+from conftest import assert_exists, git_subrepo, assert_output_matches
 
 
 def test_encode(env):
@@ -48,33 +47,33 @@ def test_encode(env):
 
         # Clone
         result = git_subrepo(
-            f'clone {env.upstream}/bar -- "{normalize_dir}"',
-            cwd=env.owner / 'foo'
+            f'clone {env.upstream}/bar -- "{normalize_dir}"', cwd=env.owner / 'foo'
         )
 
         assert_output_matches(
             result.stdout.strip(),
             f"Subrepo '{env.upstream}/bar' (master) cloned into '{normalize_dir}'.",
-            'subrepo clone command output is correct'
+            'subrepo clone command output is correct',
         )
 
         assert_exists(env.owner / 'foo' / normalize_dir, should_exist=True)
 
         # Add new file to bar and push
         env.add_new_files(f'Bar2-{round_num}', cwd=env.owner / 'bar')
-        subprocess.run(['git', 'pull'], cwd=env.owner / 'bar', check=True, capture_output=True)
-        subprocess.run(['git', 'push'], cwd=env.owner / 'bar', check=True, capture_output=True)
+        subprocess.run(
+            ['git', 'pull'], cwd=env.owner / 'bar', check=True, capture_output=True
+        )
+        subprocess.run(
+            ['git', 'push'], cwd=env.owner / 'bar', check=True, capture_output=True
+        )
 
         # Pull
-        result = git_subrepo(
-            f'pull -- "{normalize_dir}"',
-            cwd=env.owner / 'foo'
-        )
+        result = git_subrepo(f'pull -- "{normalize_dir}"', cwd=env.owner / 'foo')
 
         assert_output_matches(
             result.stdout.strip(),
             f"Subrepo '{normalize_dir}' pulled from '{env.upstream}/bar' (master).",
-            'subrepo pull command output is correct'
+            'subrepo pull command output is correct',
         )
 
         assert_exists(env.owner / 'foo' / normalize_dir, should_exist=True)

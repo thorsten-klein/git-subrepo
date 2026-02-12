@@ -1,8 +1,7 @@
 """Tests for git subrepo push to new branch"""
+
 import subprocess
-from conftest import (
-    assert_file_exists, git_subrepo, assert_output_matches
-)
+from conftest import assert_file_exists, git_subrepo, assert_output_matches
 
 
 def test_push_new_branch(env):
@@ -21,7 +20,7 @@ def test_push_new_branch(env):
     assert_output_matches(
         result.stdout.strip(),
         f"Subrepo 'bar' pushed to '{env.upstream}/bar' (newbar).",
-        'First push message is correct'
+        'First push message is correct',
     )
 
     # Do the subrepo push to another branch again
@@ -30,16 +29,18 @@ def test_push_new_branch(env):
     assert_output_matches(
         result.stdout.strip(),
         "Subrepo 'bar' has no new commits to push.",
-        'Second push message is correct'
+        'Second push message is correct',
     )
 
     # Pull the changes from UPSTREAM/bar in OWNER/bar
-    subprocess.run(['git', 'fetch'], cwd=env.owner / 'bar', check=True, capture_output=True)
+    subprocess.run(
+        ['git', 'fetch'], cwd=env.owner / 'bar', check=True, capture_output=True
+    )
     subprocess.run(
         ['git', 'checkout', 'newbar'],
         cwd=env.owner / 'bar',
         check=True,
-        capture_output=True
+        capture_output=True,
     )
 
     assert_file_exists(env.owner / 'bar' / 'FooBar')

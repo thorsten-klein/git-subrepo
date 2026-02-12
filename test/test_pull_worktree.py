@@ -1,8 +1,7 @@
 """Tests for git subrepo pull with worktree"""
+
 import subprocess
-from conftest import (
-    assert_output_matches
-)
+from conftest import assert_output_matches
 
 
 def test_pull_worktree(env):
@@ -14,13 +13,13 @@ def test_pull_worktree(env):
         ['git', 'subrepo', 'clone', '../bar', 'bar'],
         cwd=env.owner / 'foo',
         check=True,
-        capture_output=True
+        capture_output=True,
     )
     subprocess.run(
         ['git', 'worktree', 'add', '-b', 'test', '../wt'],
         cwd=env.owner / 'foo',
         check=True,
-        capture_output=True
+        capture_output=True,
     )
 
     # Modify bar
@@ -31,21 +30,14 @@ def test_pull_worktree(env):
         ['git', 'subrepo', 'pull', '--all'],
         cwd=env.owner / 'wt',
         check=True,
-        capture_output=True
+        capture_output=True,
     )
 
     # Merge into foo
     subprocess.run(
-        ['git', 'merge', 'test'],
-        cwd=env.owner / 'foo',
-        check=True,
-        capture_output=True
+        ['git', 'merge', 'test'], cwd=env.owner / 'foo', check=True, capture_output=True
     )
 
     # Check that bar was updated
     bar_content = (env.owner / 'foo' / 'bar' / 'Bar').read_text()
-    assert_output_matches(
-        bar_content.strip(),
-        'a new line',
-        'bar/Bar content correct'
-    )
+    assert_output_matches(bar_content.strip(), 'a new line', 'bar/Bar content correct')

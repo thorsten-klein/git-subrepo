@@ -1,9 +1,8 @@
 """Tests for git subrepo pull with custom messages"""
+
 import subprocess
 import os
-from conftest import (
-    git_subrepo, assert_output_matches, assert_output_like
-)
+from conftest import git_subrepo, assert_output_matches, assert_output_like
 
 
 def test_pull_message(env):
@@ -13,7 +12,9 @@ def test_pull_message(env):
 
     # Add new file to bar and push
     env.add_new_files('Bar2', cwd=env.owner / 'bar')
-    subprocess.run(['git', 'push'], cwd=env.owner / 'bar', check=True, capture_output=True)
+    subprocess.run(
+        ['git', 'push'], cwd=env.owner / 'bar', check=True, capture_output=True
+    )
 
     # Do the pull with -m option
     result = git_subrepo("pull -m 'Hello World' bar", cwd=env.owner / 'foo')
@@ -21,7 +22,7 @@ def test_pull_message(env):
     assert_output_matches(
         result.stdout.strip(),
         f"Subrepo 'bar' pulled from '{env.upstream}/bar' (master).",
-        'subrepo pull command output is correct'
+        'subrepo pull command output is correct',
     )
 
     # Check commit message
@@ -30,18 +31,18 @@ def test_pull_message(env):
         cwd=env.owner / 'foo',
         capture_output=True,
         text=True,
-        check=True
+        check=True,
     ).stdout.strip()
 
     assert_output_like(
-        foo_new_commit_message,
-        'Hello World',
-        "subrepo pull commit message"
+        foo_new_commit_message, 'Hello World', "subrepo pull commit message"
     )
 
     # Add another file to bar and push
     env.add_new_files('Bar3', cwd=env.owner / 'bar')
-    subprocess.run(['git', 'push'], cwd=env.owner / 'bar', check=True, capture_output=True)
+    subprocess.run(
+        ['git', 'push'], cwd=env.owner / 'bar', check=True, capture_output=True
+    )
 
     # Do the pull with -e option
     my_env = os.environ.copy()
@@ -53,13 +54,13 @@ def test_pull_message(env):
         env=my_env,
         capture_output=True,
         text=True,
-        check=True
+        check=True,
     )
 
     assert_output_matches(
         result.stdout.strip(),
         f"Subrepo 'bar' pulled from '{env.upstream}/bar' (master).",
-        'subrepo pull command output is correct'
+        'subrepo pull command output is correct',
     )
 
     # Check commit message
@@ -68,18 +69,18 @@ def test_pull_message(env):
         cwd=env.owner / 'foo',
         capture_output=True,
         text=True,
-        check=True
+        check=True,
     ).stdout.strip()
 
     assert_output_like(
-        foo_new_commit_message,
-        'cowabunga',
-        "subrepo pull edit commit message"
+        foo_new_commit_message, 'cowabunga', "subrepo pull edit commit message"
     )
 
     # Add another file to bar and push
     env.add_new_files('Bar4', cwd=env.owner / 'bar')
-    subprocess.run(['git', 'push'], cwd=env.owner / 'bar', check=True, capture_output=True)
+    subprocess.run(
+        ['git', 'push'], cwd=env.owner / 'bar', check=True, capture_output=True
+    )
 
     # Do the pull with -e and -m options
     my_env = os.environ.copy()
@@ -91,13 +92,13 @@ def test_pull_message(env):
         env=my_env,
         capture_output=True,
         text=True,
-        check=True
+        check=True,
     )
 
     assert_output_matches(
         result.stdout.strip(),
         f"Subrepo 'bar' pulled from '{env.upstream}/bar' (master).",
-        'subrepo pull command output is correct'
+        'subrepo pull command output is correct',
     )
 
     # Check commit message
@@ -106,11 +107,11 @@ def test_pull_message(env):
         cwd=env.owner / 'foo',
         capture_output=True,
         text=True,
-        check=True
+        check=True,
     ).stdout.strip()
 
     assert_output_like(
         foo_new_commit_message,
         'original',
-        "subrepo pull edit and message commit message"
+        "subrepo pull edit and message commit message",
     )

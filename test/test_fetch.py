@@ -1,8 +1,7 @@
 """Tests for git subrepo fetch command"""
+
 import subprocess
-from conftest import (
-    git_subrepo, assert_output_matches
-)
+from conftest import git_subrepo, assert_output_matches
 
 
 def test_fetch(env):
@@ -16,16 +15,18 @@ def test_fetch(env):
         ['git', 'tag', '-a', 'CoolTag', '-m', 'Should stay in subrepo'],
         cwd=env.owner / 'bar',
         check=True,
-        capture_output=True
+        capture_output=True,
     )
-    subprocess.run(['git', 'push'], cwd=env.owner / 'bar', check=True, capture_output=True)
+    subprocess.run(
+        ['git', 'push'], cwd=env.owner / 'bar', check=True, capture_output=True
+    )
 
     # Fetch information
     result = git_subrepo('fetch bar', cwd=env.owner / 'foo')
     assert_output_matches(
         result.stdout.strip(),
         f"Fetched 'bar' from '{env.upstream}/bar' (master).",
-        'subrepo fetch command output is correct'
+        'subrepo fetch command output is correct',
     )
 
     # Check that there is no tags fetched
@@ -34,11 +35,7 @@ def test_fetch(env):
         cwd=env.owner / 'foo',
         capture_output=True,
         text=True,
-        check=True
+        check=True,
     )
 
-    assert_output_matches(
-        result.stdout.strip(),
-        '',
-        'No tag is available'
-    )
+    assert_output_matches(result.stdout.strip(), '', 'No tag is available')

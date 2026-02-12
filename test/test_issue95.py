@@ -1,8 +1,7 @@
 """Tests for issue #95"""
+
 import subprocess
-from conftest import (
-    git_subrepo, assert_output_matches
-)
+from conftest import git_subrepo, assert_output_matches
 
 
 def test_issue95(env):
@@ -24,7 +23,7 @@ def test_issue95(env):
         ['git', 'commit', '-m', 'host initial commit'],
         cwd=host_dir,
         check=True,
-        capture_output=True
+        capture_output=True,
     )
 
     # Initialize sub repo
@@ -34,7 +33,7 @@ def test_issue95(env):
         ['git', 'commit', '-m', 'subrepo initial commit'],
         cwd=sub_dir,
         check=True,
-        capture_output=True
+        capture_output=True,
     )
 
     # Make sub a subrepo of host
@@ -45,7 +44,7 @@ def test_issue95(env):
         ['git', 'checkout', '-b', 'feature'],
         cwd=host_dir,
         check=True,
-        capture_output=True
+        capture_output=True,
     )
     (host_dir / 'feature').touch()
     subprocess.run(['git', 'add', 'feature'], cwd=host_dir, check=True)
@@ -53,13 +52,13 @@ def test_issue95(env):
         ['git', 'commit', '-m', 'feature added'],
         cwd=host_dir,
         check=True,
-        capture_output=True
+        capture_output=True,
     )
     subprocess.run(
         ['git', 'checkout', env.defaultbranch],
         cwd=host_dir,
         check=True,
-        capture_output=True
+        capture_output=True,
     )
 
     # Commit directly to subrepo
@@ -69,7 +68,7 @@ def test_issue95(env):
         ['git', 'commit', '-a', '-m', 'direct change in sub'],
         cwd=sub_dir,
         check=True,
-        capture_output=True
+        capture_output=True,
     )
 
     # Pull subrepo changes
@@ -82,7 +81,7 @@ def test_issue95(env):
         ['git', 'commit', '-a', '-m', 'another direct change in sub'],
         cwd=sub_dir,
         check=True,
-        capture_output=True
+        capture_output=True,
     )
 
     # Commit to host/sub
@@ -92,7 +91,7 @@ def test_issue95(env):
         ['git', 'commit', '-m', 'change from host'],
         cwd=host_dir,
         check=True,
-        capture_output=True
+        capture_output=True,
     )
 
     # Merge previously created feature branch
@@ -100,7 +99,7 @@ def test_issue95(env):
         ['git', 'merge', '--no-ff', '--no-edit', 'feature'],
         cwd=host_dir,
         check=True,
-        capture_output=True
+        capture_output=True,
     )
 
     # Pull subrepo changes - expected: successful pull without conflicts
@@ -109,5 +108,5 @@ def test_issue95(env):
     assert_output_matches(
         result.stdout.strip(),
         f"Subrepo 'sub' pulled from '../sub' ({env.defaultbranch}).",
-        "Pull after merge succeeded"
+        "Pull after merge succeeded",
     )

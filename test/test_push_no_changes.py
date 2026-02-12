@@ -1,7 +1,6 @@
 """Tests for git subrepo push with no changes"""
-from conftest import (
-    git_subrepo, assert_output_matches
-)
+
+from conftest import git_subrepo, assert_output_matches
 
 
 def test_push_no_changes(env):
@@ -17,7 +16,7 @@ def test_push_no_changes(env):
     assert_output_matches(
         output,
         "Subrepo 'foo' has no new commits to push.",
-        "Output OK: Check that 'push' requires changes to push"
+        "Output OK: Check that 'push' requires changes to push",
     )
 
     # Clean up

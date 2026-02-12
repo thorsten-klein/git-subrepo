@@ -1,9 +1,14 @@
 """Tests for git subrepo init command"""
+
 import subprocess
 import shutil
 from conftest import (
-    assert_exists, assert_file_exists, assert_gitrepo_comment_block,
-    assert_gitrepo_field, git_subrepo, assert_output_matches
+    assert_exists,
+    assert_file_exists,
+    assert_gitrepo_comment_block,
+    assert_gitrepo_field,
+    git_subrepo,
+    assert_output_matches,
 )
 
 
@@ -13,7 +18,7 @@ def test_init(env):
     subprocess.run(
         ['git', 'clone', str(env.upstream / 'init'), str(env.owner / 'init')],
         check=True,
-        capture_output=True
+        capture_output=True,
     )
 
     gitrepo = env.owner / 'init' / 'doc' / '.gitrepo'
@@ -31,7 +36,7 @@ def test_init(env):
     assert_output_matches(
         result.stdout.strip(),
         "Subrepo created from 'doc' (with no remote).",
-        'Command output is correct'
+        'Command output is correct',
     )
 
     assert_exists(gitrepo, should_exist=True)
@@ -52,13 +57,12 @@ def test_init(env):
     subprocess.run(
         ['git', 'clone', str(env.upstream / 'init'), str(env.owner / 'init')],
         check=True,
-        capture_output=True
+        capture_output=True,
     )
 
     # Init with options
     git_subrepo(
-        'init doc -r git@github.com:user/repo -b foo -M rebase',
-        cwd=env.owner / 'init'
+        'init doc -r git@github.com:user/repo -b foo -M rebase', cwd=env.owner / 'init'
     )
 
     assert_gitrepo_field(gitrepo, 'remote', 'git@github.com:user/repo')

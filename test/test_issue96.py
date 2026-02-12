@@ -1,8 +1,7 @@
 """Tests for issue #96"""
+
 import subprocess
-from conftest import (
-    git_subrepo, assert_output_matches
-)
+from conftest import git_subrepo, assert_output_matches
 
 
 def test_issue96(env):
@@ -24,7 +23,7 @@ def test_issue96(env):
         ['git', 'commit', '-m', 'host initial commit'],
         cwd=host_dir,
         check=True,
-        capture_output=True
+        capture_output=True,
     )
 
     # Initialize sub repo
@@ -34,7 +33,7 @@ def test_issue96(env):
         ['git', 'commit', '-m', 'subrepo initial commit'],
         cwd=sub_dir,
         check=True,
-        capture_output=True
+        capture_output=True,
     )
 
     # Make sub a subrepo of host
@@ -47,7 +46,7 @@ def test_issue96(env):
         ['git', 'commit', '-m', 'feature added'],
         cwd=host_dir,
         check=True,
-        capture_output=True
+        capture_output=True,
     )
 
     # Commit directly to subrepo
@@ -57,7 +56,7 @@ def test_issue96(env):
         ['git', 'commit', '-a', '-m', 'direct change in sub'],
         cwd=sub_dir,
         check=True,
-        capture_output=True
+        capture_output=True,
     )
 
     # Pull subrepo changes
@@ -70,14 +69,11 @@ def test_issue96(env):
         ['git', 'commit', '-a', '-m', 'another direct change in sub'],
         cwd=sub_dir,
         check=True,
-        capture_output=True
+        capture_output=True,
     )
     # Checkout temp branch otherwise push to master will fail
     subprocess.run(
-        ['git', 'checkout', '-b', 'temp'],
-        cwd=sub_dir,
-        check=True,
-        capture_output=True
+        ['git', 'checkout', '-b', 'temp'], cwd=sub_dir, check=True, capture_output=True
     )
 
     # Commit to host/sub
@@ -87,7 +83,7 @@ def test_issue96(env):
         ['git', 'commit', '-m', 'change from host'],
         cwd=host_dir,
         check=True,
-        capture_output=True
+        capture_output=True,
     )
 
     # Pull subrepo changes - expected: successful pull without conflicts
@@ -96,7 +92,7 @@ def test_issue96(env):
     assert_output_matches(
         result.stdout.strip(),
         f"Subrepo 'sub' pulled from '../sub' ({env.defaultbranch}).",
-        "Pull succeeded"
+        "Pull succeeded",
     )
 
     # Push subrepo changes - expected: successful push without conflicts
@@ -105,5 +101,5 @@ def test_issue96(env):
     assert_output_matches(
         result.stdout.strip(),
         f"Subrepo 'sub' pushed to '../sub' ({env.defaultbranch}).",
-        "Push succeeded"
+        "Push succeeded",
     )

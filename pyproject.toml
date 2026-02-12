@@ -7,7 +7,7 @@ name = "git-subrepo"
 version = "0.4.9"
 description = "Git Submodule Alternative"
 readme = "README.md"
-requires-python = ">=3.7"
+requires-python = ">=3.9"
 authors = [
     {name = "Thorsten Klein", email = "thorsten.klein.git@gmail.com"}
 ]
@@ -18,23 +18,31 @@ classifiers = [
     "Topic :: Software Development :: Version Control :: Git",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.7",
-    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
 ]
 
 [project.scripts]
 git-subrepo = "git_subrepo:main"
 
 [dependency-groups]
-dev = [
-    "pytest>=7.0.0",
+lint = [
+    "ruff~=0.13",
+]
+test = [
+    "coverage>=7.10",
+    "pytest>=8.4,<10.0",
     "pytest-xdist>=3.0.0",
-    "pytest-cov>=4.0.0",
+    "pytest-cov>=7.0",
     "pytest-mock>=3.6.1",
+]
+dev = [
+    "poethepoet~=0.37",
+    {include-group = "lint"},
+    {include-group = "test"},
 ]
 
 [tool.pytest.ini_options]
@@ -49,3 +57,19 @@ py-modules = []
 
 [tool.setuptools.package-data]
 "*" = ["*.sh", "*.bash"]
+
+[tool.ruff.format]
+quote-style = "preserve"
+line-ending = "lf"
+# Enable preview mode for Github Annotations added in 0.13.3
+preview = true
+
+[tool.mypy]
+ignore_missing_imports = true
+
+[tool.poe.tasks]
+test = {cmd = "pytest -W error", env = {PYTHONIOENCODING = "utf-8"}}
+lint = "ruff check ."
+format = "ruff format ."
+all = ["lint", "format", "test"]
+

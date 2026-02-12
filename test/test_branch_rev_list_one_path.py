@@ -1,8 +1,7 @@
 """Tests for git subrepo branch with rev-list one path"""
+
 import subprocess
-from conftest import (
-    assert_exists, git_subrepo, assert_output_matches
-)
+from conftest import assert_exists, git_subrepo, assert_output_matches
 
 
 def test_branch_rev_list_one_path(env):
@@ -16,7 +15,7 @@ def test_branch_rev_list_one_path(env):
         cwd=env.owner / 'foo',
         capture_output=True,
         text=True,
-        check=True
+        check=True,
     ).stdout.strip()
 
     env.add_new_files('bar/file1', cwd=env.owner / 'foo')
@@ -26,7 +25,7 @@ def test_branch_rev_list_one_path(env):
         ['git', 'checkout', '-b', 'other', branchpoint],
         cwd=env.owner / 'foo',
         check=True,
-        capture_output=True
+        capture_output=True,
     )
     env.add_new_files('bar/file3', cwd=env.owner / 'foo')
     env.add_new_files('bar/file4', cwd=env.owner / 'foo')
@@ -36,7 +35,7 @@ def test_branch_rev_list_one_path(env):
         ['git', 'merge', 'master'],
         cwd=env.owner / 'foo',
         check=True,
-        capture_output=True
+        capture_output=True,
     )
 
     # Check files exist
@@ -52,16 +51,21 @@ def test_branch_rev_list_one_path(env):
     assert_output_matches(
         result.stdout.strip(),
         "Created branch 'subrepo/bar' and worktree '.git/tmp/subrepo/bar'.",
-        "subrepo branch command output is correct"
+        "subrepo branch command output is correct",
     )
 
     # Count commits
-    commit_count = subprocess.run(
-        ['git', 'rev-list', 'subrepo/bar'],
-        cwd=env.owner / 'foo',
-        capture_output=True,
-        text=True,
-        check=True
-    ).stdout.strip().split('\n')
+    commit_count = (
+        subprocess
+        .run(
+            ['git', 'rev-list', 'subrepo/bar'],
+            cwd=env.owner / 'foo',
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        .stdout.strip()
+        .split('\n')
+    )
 
     assert len(commit_count) == 6, "We have only created commits for one of the paths"

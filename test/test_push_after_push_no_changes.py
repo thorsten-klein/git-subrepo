@@ -1,7 +1,6 @@
 """Tests for git subrepo push after push with no changes"""
-from conftest import (
-    git_subrepo, assert_output_matches
-)
+
+from conftest import git_subrepo, assert_output_matches
 
 
 def test_push_after_push_no_changes(env):
@@ -20,5 +19,5 @@ def test_push_after_push_no_changes(env):
     assert_output_matches(
         result.stdout.strip(),
         f"Subrepo 'bar' pushed to '{env.upstream}/bar' (master).",
-        "Output OK: Check that 'push' after an empty push works."
+        "Output OK: Check that 'push' after an empty push works.",
     )

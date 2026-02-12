@@ -4,7 +4,7 @@ This document describes how to run tests for git-subrepo.
 
 ## Prerequisites
 
-The project uses [uv](https://github.com/astral-sh/uv) for Python dependency management.
+The project uses [uv](https://github.com/astral-sh/uv) for Python dependency management and [poethepoet](https://github.com/nat-n/poethepoet) for task running.
 
 ### Installing uv
 
@@ -19,6 +19,25 @@ powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
 pip install uv
 ```
 
+## Quick Start
+
+```bash
+# Install dependencies
+uv sync --dev
+
+# Run all checks (lint, format, test)
+uv run poe all
+
+# Run just tests
+uv run poe test
+
+# Run linter
+uv run poe lint
+
+# Format code
+uv run poe format
+```
+
 ## Running Tests
 
 ### Python Tests (pytest)
@@ -29,7 +48,10 @@ The project uses pytest for Python testing. All dependencies are managed by uv.
 # Sync dependencies (first time or after updating pyproject.toml)
 uv sync --dev
 
-# Run all tests
+# Run all tests with poe (recommended)
+uv run poe test
+
+# Or run pytest directly
 uv run pytest
 
 # Run tests with verbose output
@@ -55,6 +77,30 @@ make test
 
 This runs all bash tests located in the `test/` directory.
 
+## Task Runner (poe)
+
+The project uses poethepoet for common development tasks:
+
+```bash
+# Run all checks (lint, format, test)
+uv run poe all
+
+# Run tests only
+uv run poe test
+
+# Check code with ruff
+uv run poe lint
+
+# Format code with ruff
+uv run poe format
+
+# Check formatting without changes
+uv run poe format --check
+
+# List all available tasks
+uv run poe --help
+```
+
 ## Development Workflow
 
 ```bash
@@ -65,14 +111,14 @@ cd git-subrepo
 # Sync dependencies
 uv sync --dev
 
-# Run Python tests
-uv run pytest -v
+# Run all checks before committing
+uv run poe all
 
-# Run bash tests
-make test
-
-# Run both
-uv run pytest -v && make test
+# Or run individual steps
+uv run poe lint        # Check code quality
+uv run poe format      # Format code
+uv run poe test        # Run Python tests
+make test              # Run bash tests
 ```
 
 ## Test Structure
