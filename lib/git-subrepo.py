@@ -14,13 +14,21 @@ import argparse
 import re
 import shlex
 import shutil
+import textwrap
 from pathlib import Path
 from typing import Optional, List, Dict
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 VERSION = "0.4.9"
 REQUIRED_GIT_VERSION = "2.23.0"
 EMPTY_TREE_SHA = '4b825dc642cb6eb9a060e54bf8d69288fbee4904'
+GITREPO_HEADER = textwrap.dedent("""\
+    ; DO NOT EDIT (unless you know what you are doing)
+    ;
+    ; This subdirectory is a git "subrepo", and this file is maintained by the
+    ; git-subrepo command. See https://github.com/ingydotnet/git-subrepo#readme
+    ;
+    """)
 
 os.environ['FILTER_BRANCH_SQUELCH_WARNING'] = '1'
 
@@ -85,19 +93,10 @@ class GitRunner:
         self.verbose = verbose
         self.debug = debug
         self.quiet = quiet
-        self.indent = ""
 
     def run(self, args: List[str], capture=False, fail=True, check=False, show=False) -> Optional[str]:
-        """Run git command
-
-        Args:
-            capture: Return stdout without stripping
-            check: Return stdout.strip()
-            fail: Raise error on non-zero exit
-            show: Show output to terminal (default False, captures silently)
-        """
+        """Run git command"""
         cmd = ['git'] + args
-
         if self.debug:
             self.log(f">>> {' '.join(cmd)}")
 
@@ -113,7 +112,6 @@ class GitRunner:
                     raise GitSubrepoError(f"Command failed: '{' '.join(cmd)}'.")
                 return None
             else:
-                # Default: capture output silently
                 result = subprocess.run(cmd, capture_output=True, text=True, check=False)
                 if result.returncode != 0 and fail:
                     raise GitSubrepoError(f"Command failed: '{' '.join(cmd)}'.\n{result.stderr}")
@@ -152,17 +150,13 @@ class GitRunner:
         """Check if commit is in rev-list (i.e., is an ancestor)"""
         if not commit:
             return False
-        # Use merge-base to check if commit is an ancestor of list_head
-        result = subprocess.run(
-            ['git', 'merge-base', '--is-ancestor', commit, list_head],
-            capture_output=True
-        )
+        result = subprocess.run(['git', 'merge-base', '--is-ancestor', commit, list_head], capture_output=True)
         return result.returncode == 0
 
     def log(self, msg: str):
         """Print verbose/debug message"""
         if self.verbose:
-            print(f"{self.indent}* {msg}")
+            print(f"* {msg}")
 
     def say(self, msg: str):
         """Print message unless quiet"""
@@ -214,12 +208,11 @@ class GitSubrepo:
     def main(self, args):
         """Main entry point"""
         # Check environment flags
-        if os.getenv('GIT_SUBREPO_QUIET'):
-            self.flags.quiet = True
-        if os.getenv('GIT_SUBREPO_VERBOSE'):
-            self.flags.verbose = True
-        if os.getenv('GIT_SUBREPO_DEBUG'):
-            self.flags.debug = True
+        for env_var, flag_attr in [('GIT_SUBREPO_QUIET', 'quiet'),
+                                     ('GIT_SUBREPO_VERBOSE', 'verbose'),
+                                     ('GIT_SUBREPO_DEBUG', 'debug')]:
+            if os.getenv(env_var):
+                setattr(self.flags, flag_attr, True)
 
         self.parse_args(args)
         self.check_environment()
@@ -248,6 +241,7 @@ class GitSubrepo:
         # Reorder args: options first, then positionals
         options, positionals = [], []
         i, seen_sep = 0, False
+        value_opts = ['-b', '--branch', '-M', '--method', '-m', '--message', '--file', '-r', '--remote']
 
         while i < len(args):
             arg = args[i]
@@ -258,10 +252,9 @@ class GitSubrepo:
                 positionals.append(arg)
             else:
                 options.append(arg)
-                if arg in ['-b', '--branch', '-M', '--method', '-m', '--message', '--file', '-r', '--remote']:
-                    if i + 1 < len(args):
-                        i += 1
-                        options.append(args[i])
+                if arg in value_opts and i + 1 < len(args):
+                    i += 1
+                    options.append(args[i])
             i += 1
 
         parser = self._create_parser()
@@ -279,16 +272,16 @@ class GitSubrepo:
             sys.exit(0)
 
         # Set flags
-        self.flags.all = parsed.all_flag or False
-        self.flags.ALL = parsed.ALL_flag or False
-        self.flags.force = parsed.force or False
-        self.flags.fetch = parsed.fetch_flag or False
-        self.flags.squash = parsed.squash or False
-        self.flags.update = parsed.update or False
-        self.flags.quiet = parsed.quiet or False
-        self.flags.verbose = parsed.verbose or False
-        self.flags.debug = parsed.debug or False
-        self.flags.edit = parsed.edit or False
+        for flag in ['all_flag', 'ALL_flag', 'force', 'fetch_flag', 'squash',
+                     'update', 'quiet', 'verbose', 'debug', 'edit']:
+            flag_name = flag.replace('_flag', '') if flag.endswith('_flag') else flag
+            if flag == 'all_flag':
+                flag_name = 'all'
+            elif flag == 'ALL_flag':
+                flag_name = 'ALL'
+            elif flag == 'fetch_flag':
+                flag_name = 'fetch'
+            setattr(self.flags, flag_name, getattr(parsed, flag, False) or False)
 
         if self.flags.ALL:
             self.flags.all = True
@@ -323,11 +316,10 @@ class GitSubrepo:
             self.commit_msg_file = parsed.msg_file
 
         # Handle help
-        if parsed.help_flag:
-            if not parsed.command:
-                self.command = 'help'
-                self.args = []
-                return
+        if parsed.help_flag and not parsed.command:
+            self.command = 'help'
+            self.args = []
+            return
 
         # Set command
         self.command = parsed.command
@@ -346,9 +338,8 @@ class GitSubrepo:
 
         self.validate_options()
 
-        if self.flags.update:
-            if not self.override_branch and not self.override_remote:
-                self.usage_error("Can't use '--update' without '--branch' or '--remote'.")
+        if self.flags.update and not (self.override_branch or self.override_remote):
+            self.usage_error("Can't use '--update' without '--branch' or '--remote'.")
 
     def _create_parser(self):
         """Create argument parser"""
@@ -454,10 +445,9 @@ class GitSubrepo:
         self.do_init()
 
         if self.ok:
-            if self.config.remote == 'none':
-                self.git.say(f"Subrepo created from '{self.subdir}' (with no remote).")
-            else:
-                self.git.say(f"Subrepo created from '{self.subdir}' with remote '{self.config.remote}' ({self.config.branch}).")
+            msg = f"Subrepo created from '{self.subdir}' "
+            msg += "(with no remote)." if self.config.remote == 'none' else f"with remote '{self.config.remote}' ({self.config.branch})."
+            self.git.say(msg)
         else:
             self.error(f"Unknown init error code: '{self.code}'")
 
@@ -577,35 +567,34 @@ class GitSubrepo:
         if not self.flags.force and self.config_option != 'method':
             self.error("This option is autogenerated, use '--force' to override.")
 
-        if self.config_option == 'method':
-            if self.config_value not in ['merge', 'rebase']:
-                self.error("Not a valid method. Valid options are 'merge' or 'rebase'.")
+        if self.config_option == 'method' and self.config_value not in ['merge', 'rebase']:
+            self.error("Not a valid method. Valid options are 'merge' or 'rebase'.")
 
         self.git.config_set(self.gitrepo, f'subrepo.{self.config_option}', self.config_value)
         self.git.say(f"Subrepo '{self.subdir}' option '{self.config_option}' set to '{self.config_value}'.")
 
     def cmd_help(self):
         """Show help documentation"""
-        print("""
-git subrepo - Git Submodule Alternative
+        print(textwrap.dedent("""
+            git subrepo - Git Submodule Alternative
 
-Commands:
-  clone     Clone a remote repository into a local subdirectory
-  init      Turn a current subdirectory into a subrepo
-  pull      Pull upstream changes to the subrepo
-  push      Push local subrepo changes upstream
-  fetch     Fetch a subrepo's remote branch (and create a ref for it)
-  branch    Create a branch containing the local subrepo commits
-  commit    Commit a merged subrepo branch into the mainline
-  status    Get status of a subrepo (or all of them)
-  clean     Remove branches, remotes and refs for a subrepo
-  config    Set subrepo configuration properties
-  help      Documentation for git-subrepo
-  version   Display git-subrepo version info
-  upgrade   Upgrade the git-subrepo software itself
+            Commands:
+              clone     Clone a remote repository into a local subdirectory
+              init      Turn a current subdirectory into a subrepo
+              pull      Pull upstream changes to the subrepo
+              push      Push local subrepo changes upstream
+              fetch     Fetch a subrepo's remote branch (and create a ref for it)
+              branch    Create a branch containing the local subrepo commits
+              commit    Commit a merged subrepo branch into the mainline
+              status    Get status of a subrepo (or all of them)
+              clean     Remove branches, remotes and refs for a subrepo
+              config    Set subrepo configuration properties
+              help      Documentation for git-subrepo
+              version   Display git-subrepo version info
+              upgrade   Upgrade the git-subrepo software itself
 
-See 'git help subrepo' for complete documentation.
-""")
+            See 'git help subrepo' for complete documentation.
+            """))
 
     def cmd_version(self):
         """Print version information"""
@@ -758,7 +747,6 @@ See 'git help subrepo' for complete documentation.
             else:
                 self.git.log("Check upstream head against .gitrepo commit.")
                 if not self.flags.force:
-                    self.git.run(['rev-parse', 'FETCH_HEAD^0'], capture=True)
                     upstream = self.git.run(['rev-parse', 'FETCH_HEAD^0'], check=True)
                     if upstream != self.config.commit:
                         self.error("There are new changes upstream, you need to pull first.")
@@ -803,14 +791,13 @@ See 'git help subrepo' for complete documentation.
 
         self.git.log("Check if we have something to push")
         new_commit = self.git.run(['rev-parse', branch], check=True)
-        if not new_upstream:
-            if self.upstream_head_commit == new_commit:
-                if branch_created:
-                    self.git.log(f"Remove branch '{branch}'.")
-                    self.delete_branch(branch)
-                self.ok = False
-                self.code = -2
-                return
+        if not new_upstream and self.upstream_head_commit == new_commit:
+            if branch_created:
+                self.git.log(f"Remove branch '{branch}'.")
+                self.delete_branch(branch)
+            self.ok = False
+            self.code = -2
+            return
 
         if not self.flags.force and not new_upstream:
             self.git.log(f"Make sure '{branch}' contains the upstream HEAD.")
@@ -886,11 +873,12 @@ See 'git help subrepo' for complete documentation.
                 prev = self.git.run(['log', '-1', '-G', 'commit =', '--format=%H', self.gitrepo], capture=True, fail=False)
                 if prev:
                     prev = self.git.run(['log', '-1', '--format=%H', f'{prev.strip()}^'], check=True)
-                self.error(f"""The last sync point (where upstream and the subrepo were equal) is not an ancestor.
-This is usually caused by a rebase affecting that commit.
-To recover set the subrepo parent in '{self.gitrepo}'
-to '{prev}'
-and validate the subrepo by comparing with 'git subrepo branch {self.subdir}'""")
+                self.error(textwrap.dedent(f"""\
+                    The last sync point (where upstream and the subrepo were equal) is not an ancestor.
+                    This is usually caused by a rebase affecting that commit.
+                    To recover set the subrepo parent in '{self.gitrepo}'
+                    to '{prev}'
+                    and validate the subrepo by comparing with 'git subrepo branch {self.subdir}'"""))
 
             # Get commit list
             self.git.log("Create new commits with parents into the subrepo fetch")
@@ -928,14 +916,9 @@ and validate the subrepo by comparing with 'git subrepo branch {self.subdir}'"""
                 refs_fetch = f'refs/subrepo/{self.subref}/fetch'
                 if self.git.rev_exists(refs_fetch) and self.command == 'pull':
                     # Check if gitrepo_commit is reachable from refs_fetch
-                    # (i.e., gitrepo_commit is an ancestor of the new upstream)
-                    result = subprocess.run(
-                        ['git', 'merge-base', '--is-ancestor', gitrepo_commit, refs_fetch],
-                        capture_output=True
-                    )
+                    result = subprocess.run(['git', 'merge-base', '--is-ancestor', gitrepo_commit, refs_fetch],
+                                          capture_output=True)
                     if result.returncode != 0:
-                        # gitrepo_commit is not an ancestor of refs_fetch
-                        # This could mean the upstream was rebased/rewritten
                         if not self.git.rev_exists(gitrepo_commit):
                             self.error(f"Local repository does not contain {gitrepo_commit}. Try to 'git subrepo fetch {self.subref}' or add the '-F' flag.")
                         else:
@@ -970,9 +953,8 @@ and validate the subrepo by comparing with 'git subrepo branch {self.subdir}'"""
                     commit_msg = self.git.run(['log', '-n', '1', '--date=default', '--format=%B', commit], capture=True)
 
                     env = os.environ.copy()
-                    env['GIT_AUTHOR_DATE'] = author_date
-                    env['GIT_AUTHOR_EMAIL'] = author_email
-                    env['GIT_AUTHOR_NAME'] = author_name
+                    env.update({'GIT_AUTHOR_DATE': author_date, 'GIT_AUTHOR_EMAIL': author_email,
+                               'GIT_AUTHOR_NAME': author_name})
 
                     tree_cmd = ['commit-tree', '-F', '-'] + first_parent + second_parent + [f'{commit}:{self.subdir}']
                     proc = subprocess.run(['git'] + tree_cmd, input=commit_msg, capture_output=True, text=True, env=env)
@@ -989,22 +971,22 @@ and validate the subrepo by comparing with 'git subrepo branch {self.subdir}'"""
             self.git.run(['branch', branch, 'HEAD'])
 
             # Filter branch
+            cmd = ['git', 'filter-branch', '-f', '--subdirectory-filter', self.subref, branch]
             if self.flags.verbose:
-                subprocess.run(['git', 'filter-branch', '-f', '--subdirectory-filter', self.subref, branch], check=False)
+                subprocess.run(cmd, check=False)
             else:
-                subprocess.run(['git', 'filter-branch', '-f', '--subdirectory-filter', self.subref, branch],
-                             capture_output=True, check=False)
+                subprocess.run(cmd, capture_output=True, check=False)
 
         # Remove .gitrepo file
         self.git.log(f"Remove the .gitrepo file from {first_gitrepo_commit or ''}..{branch}")
         filter_range = f'{first_gitrepo_commit}..{branch}' if first_gitrepo_commit else branch
 
+        cmd = ['git', 'filter-branch', '-f', '--prune-empty', '--tree-filter', 'rm -f .gitrepo',
+               '--', filter_range, '--first-parent']
         if self.flags.verbose:
-            subprocess.run(['git', 'filter-branch', '-f', '--prune-empty', '--tree-filter',
-                          'rm -f .gitrepo', '--', filter_range, '--first-parent'], check=False)
+            subprocess.run(cmd, check=False)
         else:
-            subprocess.run(['git', 'filter-branch', '-f', '--prune-empty', '--tree-filter',
-                          'rm -f .gitrepo', '--', filter_range, '--first-parent'], capture_output=True, check=False)
+            subprocess.run(cmd, capture_output=True, check=False)
 
         self.create_worktree(branch)
 
@@ -1225,15 +1207,17 @@ and validate the subrepo by comparing with 'git subrepo branch {self.subdir}'"""
                 self.error("There is no worktree available, use the branch command first")
             elif self.command not in ['branch', 'clean', 'commit', 'push'] and has_worktree:
                 if os.path.exists(self.gitrepo):
-                    self.error(f"""There is already a worktree with branch subrepo/{self.subdir}.
-Use the --force flag to override this check or perform a subrepo clean
-to remove the worktree.""")
+                    self.error(textwrap.dedent(f"""\
+                        There is already a worktree with branch subrepo/{self.subdir}.
+                        Use the --force flag to override this check or perform a subrepo clean
+                        to remove the worktree."""))
                 else:
-                    self.error(f"""There is already a worktree with branch subrepo/{self.subdir}.
-Use the --force flag to override this check or remove the worktree with
-1. rm -rf {worktree_path}
-2. git worktree prune
-""")
+                    self.error(textwrap.dedent(f"""\
+                        There is already a worktree with branch subrepo/{self.subdir}.
+                        Use the --force flag to override this check or remove the worktree with
+                        1. rm -rf {worktree_path}
+                        2. git worktree prune
+                        """))
 
         # Initialize config if needed
         if not self.config:
@@ -1334,9 +1318,7 @@ Use the --force flag to override this check or remove the worktree with
             return
 
         # Encode special characters
-        subref = self.subref
-        subref = subref.replace('%', '%25')
-
+        subref = self.subref.replace('%', '%25')
         subref = '/' + subref + '/'
         subref = subref.replace('/.', '/%2e')
         subref = subref.replace('.lock/', '%2elock/')
@@ -1400,12 +1382,7 @@ Use the --force flag to override this check or remove the worktree with
             else:
                 newfile = True
                 with open(self.gitrepo, 'w') as f:
-                    f.write("""; DO NOT EDIT (unless you know what you are doing)
-;
-; This subdirectory is a git "subrepo", and this file is maintained by the
-; git-subrepo command. See https://github.com/ingydotnet/git-subrepo#readme
-;
-""")
+                    f.write(GITREPO_HEADER)
 
         # Update fields
         should_update_remote = newfile or (self.flags.update and self.override_remote) or \
@@ -1667,76 +1644,72 @@ Use the --force flag to override this check or remove the worktree with
 
         args_str = ' '.join(args)
 
-        return f"""git subrepo {self.command}{is_merge} {args_str}
+        return textwrap.dedent(f"""\
+            git subrepo {self.command}{is_merge} {args_str}
 
-subrepo:
-  subdir:   "{self.subdir}"
-  merged:   "{merged}"
-upstream:
-  origin:   "{self.config.remote}"
-  branch:   "{self.config.branch}"
-  commit:   "{commit}"
-git-subrepo:
-  version:  "{VERSION}"
-  origin:   "???"
-  commit:   "???"
-"""
+            subrepo:
+              subdir:   "{self.subdir}"
+              merged:   "{merged}"
+            upstream:
+              origin:   "{self.config.remote}"
+              branch:   "{self.config.branch}"
+              commit:   "{commit}"
+            git-subrepo:
+              version:  "{VERSION}"
+              origin:   "???"
+              commit:   "???"
+            """)
 
     def print_join_error(self):
         """Print error message for join failures"""
-        msg = f"""
-You will need to finish the {self.command} by hand. A new working tree has been
-created at {self.worktree} so that you can resolve the conflicts
-shown in the output above.
-
-This is the common conflict resolution workflow:
-
-  1. cd {self.worktree}
-  2. Resolve the conflicts (see "git status").
-  3. "git add" the resolved files.
-"""
-
         method = self.join_method or self.config.method
-        if method == 'rebase':
-            msg += """  4. git rebase --continue
-"""
-        else:
-            msg += """  4. git commit
-"""
-
-        msg += f"""  5. If there are more conflicts, restart at step 2.
-  6. cd {self.start_pwd}
-"""
-
         branch_name = getattr(self, 'branch', None) or f'subrepo/{self.subdir}'
-        if self.command == 'push':
-            msg += f"""  7. git subrepo push {self.subdir} {branch_name}
-"""
-        else:
-            if self.commit_msg_file:
-                msg += f"""  7. git subrepo commit --file={self.commit_msg_file} {self.subdir}
-"""
-            else:
-                msg += f"""  7. git subrepo commit {self.subdir}
-"""
 
-        method_name = self.join_method or self.config.method
-        if self.command == 'pull' and method_name == 'rebase':
-            msg += f"""
-After you have performed the steps above you can push your local changes
-without repeating the rebase by:
-  1. git subrepo push {self.subdir} {branch_name}
+        rebase_step = "git rebase --continue" if method == 'rebase' else "git commit"
 
-"""
+        commit_cmd = f"git subrepo commit --file={self.commit_msg_file} {self.subdir}" if self.commit_msg_file else \
+                     f"git subrepo commit {self.subdir}"
 
-        msg += f"""See "git help {method_name}" for details.
+        push_cmd = f"git subrepo push {self.subdir} {branch_name}"
 
-Alternatively, you can abort the {self.command} and reset back to where you started:
+        rebase_note = ""
+        if self.command == 'pull' and method == 'rebase':
+            rebase_note = textwrap.dedent(f"""
+                After you have performed the steps above you can push your local changes
+                without repeating the rebase by:
+                  1. {push_cmd}
 
-  1. git subrepo clean {self.subdir}
+                """)
 
-See "git help subrepo" for more help.
-"""
+        msg = textwrap.dedent(f"""\
+            You will need to finish the {self.command} by hand. A new working tree has been
+            created at {self.worktree} so that you can resolve the conflicts
+            shown in the output above.
+
+            This is the common conflict resolution workflow:
+
+              1. cd {self.worktree}
+              2. Resolve the conflicts (see "git status").
+              3. "git add" the resolved files.
+              4. {rebase_step}
+              5. If there are more conflicts, restart at step 2.
+              6. cd {self.start_pwd}
+              7. {commit_cmd if self.command == 'pull' else push_cmd}
+            """)
+
+        if rebase_note:
+            msg += rebase_note
+
+        msg += textwrap.dedent(f"""
+            See "git help {method}" for details.
+
+            Alternatively, you can abort the {self.command} and reset back to where you started:
+
+              1. git subrepo clean {self.subdir}
+
+            See "git help subrepo" for more help.
+            """)
+
         print(msg, file=sys.stderr)
 
     def check_version(self, got: str, want: str) -> bool:
