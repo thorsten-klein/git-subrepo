@@ -64,11 +64,8 @@ line-ending = "lf"
 # Enable preview mode for Github Annotations added in 0.13.3
 preview = true
 
-[tool.mypy]
-ignore_missing_imports = true
-
 [tool.poe.tasks]
-test = {cmd = "pytest -W error", env = {PYTHONIOENCODING = "utf-8"}}
+test = {cmd = "pytest -n=auto -W error", env = {PYTHONIOENCODING = "utf-8"}}
 lint = "ruff check ."
 format = "ruff format ."
 all = ["lint", "format", "test"]
